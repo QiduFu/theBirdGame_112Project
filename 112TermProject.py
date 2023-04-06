@@ -132,6 +132,6 @@ def redrawAll(app):
     pass
 
 def main():
-    runApp(width=800, height=800, title='A Tale of the Bee Game')
+    runApp(width=800, height=800, title='A Tale of the Bee Game!')
 
 main()

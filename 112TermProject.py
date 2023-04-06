@@ -6,12 +6,13 @@
     #email: qiduf@andrew.cmu.edu
 # --------------------------------------------------------------------------
 
-# inspired bu the Google's Earth Day Doodle and Mike's scaffolded project
+# inspired by the Google's Earth Day Doodle and Mike's scaffolded project
 # https://www.google.com/doodles/earth-day-2020
 
 from cmu_graphics import *
 import random
 import math, time
+
 
 
 # The BEE (helper BEES)
@@ -131,6 +132,6 @@ def redrawAll(app):
     pass
 
 def main():
-    runApp(width=800, height=800, title='Bee Game!')
+    runApp(width=800, height=800, title='A Tale of the Bee Game')
 
 main()

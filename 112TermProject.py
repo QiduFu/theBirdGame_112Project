@@ -15,7 +15,7 @@ import math, time
 
 
 
-# The BEE (helper BEES)
+# The BEE (main)
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
@@ -25,7 +25,7 @@ class Bee(object):
     def __init__(self, app):
         pass
     
-    def onAppstep(self):
+    def onStep(self):
         pass
 
     def getTarget(Self):
@@ -47,13 +47,29 @@ class Bee(object):
 # --------------------------------------------------------------------------
 
 class Player(Bee):
-    def __init__(self, app):
-        pass
+    def __init__(self, locX, locY):
+        self.locX = locX
+        self.locY = locY
+        self.cursorX = 400 #mid point
+        self.cursorY = 400 #mid point
+        self.playerSteps = 0
+        self.playerStepsPerSecond = 5
     
-    def onAppstep(self):
-        pass
+    def drawPlayer(self, app):
+        drawCircle(self.locX, self.locY, 30, fill='cyan')
+        drawImage(app.url, 325, 200, align='center')
+    
+    def playerOnStep(self):
+        self.makeMovement()
+       
+    def makeMovement(self):
+        #get the drection of the bee's movement left/up - 1, right/down +1
+        moveDirectionX = self.cursorX - self.locX
+        moveDirectionY = self.cursorY - self.locY
+        self.locX += moveDirectionX / 10
+        self.locY += moveDirectionY / 10
 
-    def getTarget(Self):
+    def getTarget(self):
         pass
 
     def getHeldColors(self):
@@ -66,19 +82,17 @@ class Player(Bee):
         pass
 
 
-# The BEE (Player BEES)
+# The BEE (Helper BEES)
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 
-class Player(Bee):
+class Helper(Bee):
     def __init__(self, app):
         pass
     
-    def onAppstep(self):
-        pass
-
+    def onAppstep(self, x,):
         pass
 
     def redrawll(self, canvas):
@@ -93,14 +107,18 @@ class Player(Bee):
 
 class Flower(object):
 
-    @staticmethod
-    def update():
-        pass
+    # @staticmethod
+    # def update():
+    #     pass
 
-    def __init__(self, app):
-        pass
+    def __init__(self, locX, locY, color, pollinator):
+        self.x = locX
+        self.y = locY
+        self.color = color
+        # True pollinator else pollinated
+        self.pollinator = pollinator
     
-    def onAppstep(self):
+    def flowerOnStep(self):
         pass
 
     def inView(self):
@@ -120,18 +138,29 @@ class Flower(object):
 # --------------------------------------------------------------------------
 
 def onAppStart(app):
-    pass
+    flagBeeWings(app)
+    app.player1 = Player(400, 400)
 
-def onMouseMove(app):
-    pass
+def flagBeeWings(app):
+    # the bee picture is from https://opengameart.org/content/bee-enemy
+    app.url = 'beePic.png'
+    picWidth, picHeight = getImageSize(app.url)
+    print(f"{picWidth, picHeight = }")
 
-def onAppStep(app):
-    pass
+def onMouseMove(app, x, y):
+    app.player1.cursorX = x
+    app.player1.cursorY = y
+
+def onStep(app):
+    app.player1.playerOnStep()
 
 def redrawAll(app):
-    pass
+    drawTitle(app)
+    app.player1.drawPlayer(app)
 
+def drawTitle(app):
+    drawLabel('A Tale of the Bee Game', 400, 30, size=30)
 def main():
-    runApp(width=800, height=800, title='A Tale of the Bee Game!')
+    runApp(width=800, height=800)
 
 main()

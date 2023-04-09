@@ -1,4 +1,4 @@
-#BEE GAME
+#title: A Game of Flying Birds
 #date: 04/03/2023
 #spring23 15112 term project
 #name: Qidu Fu
@@ -16,13 +16,13 @@ import math, time
 
 
 
-# The BEE (main)
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
+# The BIRD (main)-----------------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 
-class Bee(object):
+class Bird(object):
     def __init__(self, app):
         pass
     
@@ -43,11 +43,11 @@ class Bee(object):
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
-# # The BEE (Player BEE)----------------------------------------------------
+# # The BIRD (Player bird)----------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 
-class Player(Bee):
+class Player(Bird):
     def __init__(self, locX, locY):
         self.locX = locX
         self.locY = locY
@@ -64,9 +64,10 @@ class Player(Bee):
         self.makeMovement()
        
     def makeMovement(self):
-        #get the drection of the bee's movement left/up - 1, right/down +1
+        #get the movement distance between the cursor and current locations
         moveDistanceX = self.cursorX - self.locX
         moveDisctanceY = self.cursorY - self.locY
+        #update the locations
         self.locX += moveDistanceX / 10
         self.locY += moveDisctanceY / 10
 
@@ -85,11 +86,11 @@ class Player(Bee):
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
-# # The BEE (Helper BEES)---------------------------------------------------
+# # The BIRD (Helper BIRDS)---------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 
-class Helper(Bee):
+class Helper(Bird):
     def __init__(self, app):
         pass
     
@@ -140,12 +141,14 @@ class Flower(object):
 # --------------------------------------------------------------------------
 
 def onAppStart(app):
-    flagBeeWings(app)
+    flagBirdWings(app)
     app.player1 = Player(400, 400)
 
-def flagBeeWings(app):
-    # The bee picture is from https://opengameart.org/content/bee-enemy
-    app.url = 'beePic.png'
+def flagBirdWings(app):
+    # The bird picture is from 
+    # https://www.pngitem.com/middle/
+    # ihbJiib_transparent-bird-bird-sprite-sheet-png-png-download/
+    app.url = 'birdPic.png'
     picWidth, picHeight = getImageSize(app.url)
     print(f"{picWidth, picHeight = }")
 
@@ -161,8 +164,8 @@ def redrawAll(app):
     app.player1.drawPlayer(app)
 
 def drawTitle(app):
-    drawLabel('A Tale of the Bee Game', 400, 30, size=30)
-    
+    drawLabel('A Game of Flying Birds', 400, 30, size=30)
+
 def main():
     runApp(width=800, height=800)
 

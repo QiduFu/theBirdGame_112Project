@@ -1,12 +1,13 @@
 #BEE GAME
-    #date: 04/03/2023
-    #spring23 15112 term project
-    #name: Qidu Fu
-    #andrewId: qiduf
-    #email: qiduf@andrew.cmu.edu
+#date: 04/03/2023
+#spring23 15112 term project
+#name: Qidu Fu
+#andrewId: qiduf
+#email: qiduf@andrew.cmu.edu
 # --------------------------------------------------------------------------
 
-# inspired by the Google's Earth Day Doodle and Mike's scaffolded project
+# inspired by the Google's Earth Day Doodle 
+# and Mike's (15112 instuctor) scaffolded project
 # https://www.google.com/doodles/earth-day-2020
 
 from cmu_graphics import *
@@ -53,7 +54,7 @@ class Player(Bee):
         self.cursorX = 400 #mid point of the canvas
         self.cursorY = 400 #mid point of the canvas
         self.playerSteps = 0
-        self.playerStepsPerSecond = 5
+        self.playerStepsPerSecond = 4
     
     def drawPlayer(self, app):
         drawCircle(self.locX, self.locY, 30, fill='cyan')
@@ -64,10 +65,10 @@ class Player(Bee):
        
     def makeMovement(self):
         #get the drection of the bee's movement left/up - 1, right/down +1
-        moveDirectionX = self.cursorX - self.locX
-        moveDirectionY = self.cursorY - self.locY
-        self.locX += moveDirectionX / 10
-        self.locY += moveDirectionY / 10
+        moveDistanceX = self.cursorX - self.locX
+        moveDisctanceY = self.cursorY - self.locY
+        self.locX += moveDistanceX / 10
+        self.locY += moveDisctanceY / 10
 
     def getTarget(self):
         pass
@@ -143,7 +144,7 @@ def onAppStart(app):
     app.player1 = Player(400, 400)
 
 def flagBeeWings(app):
-    # the bee picture is from https://opengameart.org/content/bee-enemy
+    # The bee picture is from https://opengameart.org/content/bee-enemy
     app.url = 'beePic.png'
     picWidth, picHeight = getImageSize(app.url)
     print(f"{picWidth, picHeight = }")
@@ -161,6 +162,7 @@ def redrawAll(app):
 
 def drawTitle(app):
     drawLabel('A Tale of the Bee Game', 400, 30, size=30)
+    
 def main():
     runApp(width=800, height=800)
 

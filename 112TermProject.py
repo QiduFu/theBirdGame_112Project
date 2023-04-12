@@ -23,32 +23,30 @@ from PIL import Image
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 
-class Bird:
-    inventory = []
+class Bird(object):
+    
     def __init__(self):
-        #self.flagBirdWings()
+        self.inventory = []
         self.birdCounter = 0
         self.maxInventory = 6 #pollen inventory can hold up to 6 colors
-    
-    def flagBirdWings(self):
+        self.birds = []
+        self.newWidth = None # get the resized bird's image
+        self.newHeight = None # get the resized bird's image
+
+        # load the bird picture
         # The bird picture is from 
         # https://www.pngitem.com/middle/
         # ihbJiib_transparent-bird-bird-sprite-sheet-png-png-download/
         url = 'birdPic.png'
-        picWidth, picHeight = getImageSize(url)
         birdImage = Image.open(url)
-        print(f"{picWidth, picHeight = }")
         birdImageNum = 3 
-        birds = []
         for i in range(birdImageNum):
-            bird = birdImage.crop((308*i, 0, 308*(i + 1), 1232))
-            birds.append(CMUImage(bird))
-            #print(getImageSize(CMUImage(bird)))
+            bird = birdImage.crop((320*i, 0, 320*(i + 1), 1232))
+            imageWidth, imageHeight = bird.width, bird.height
+            self.newWidth, self.newHeight = (imageWidth // 3, imageHeight // 3)
+            self.birds.append(CMUImage(bird))
         self.birdCounter = 0
-        return birds
-
-    def onStep(self):
-        pass
+        self.stepCounter = 0
 
     def getTarget(self):
         pass
@@ -57,9 +55,6 @@ class Bird:
         pass
 
     def gather(self, other):
-        pass
-
-    def redraw(self, app):
         pass
 
 # --------------------------------------------------------------------------
@@ -78,22 +73,26 @@ class Player(Bird):
         self.cursorY = y 
         self.playerSteps = 0
         self.playerStepsPerSecond = 4
-        self.birds = self.flagBirdWings()
+        # self.birds = self.flagBirdWings()
     
     def drawPlayer(self, app):
-        drawCircle(self.x, self.y, 30, fill='cyan')
-        # birdImage = self.birds[self.birdCounter]
-        # drawImage(birdImage, self.x, self.y, align='center')
+        #drawCircle(self.x, self.y, 30, fill='cyan')
+        bird = self.birds[self.birdCounter]
+        drawImage(bird, self.x, self.y, align='center', 
+                  width=self.newWidth, height=self.newHeight)
 
     def playerOnStep(self):
         self.makeMovement() #move locations to the cursors
-        #self.birdCounter = (1 + self.birdCounter) % len(self.birds)
+        self.stepCounter += 1
+        if self.stepCounter >= 5: #update the sprite every 5 steps
+            self.birdCounter = (1 + self.birdCounter) % len(self.birds)
+            self.stepCounter = min(0, self.stepCounter)
        
     def makeMovement(self):
-        #get the movement distance between the cursor and current locations
+        #get the movement distances between the cursor and current locations
         moveDistanceX = self.cursorX - self.x
         moveDisctanceY = self.cursorY - self.y
-        #update the locations
+        #update the locations with 1/8 of the current distances
         self.x += moveDistanceX / 8
         self.y += moveDisctanceY / 8
 
@@ -107,8 +106,8 @@ class Player(Bird):
         pass
 
     def drawInventory(self, app):
-        for i in range(len(Player.inventory)):
-            color = Player.inventory[i]
+        for i in range(len(self.inventory)):
+            color = self.inventory[i]
             drawCircle(10+i*15, 10, 10, fill=color)
 
 
@@ -153,13 +152,13 @@ class Flower(object):
 
     def drawFlower(self, app):
         if self.isPollinator:    
-            #solid color for pollinator
+            #solid circles for pollinator
             drawCircle(self.x, self.y, self.radius, fill=self.color)
             if self.isGathered:
                 drawCircle(self.x, self.y, self.radius, fill = 'white',
                             border=self.color, borderWidth=4)
         else:
-            # hollow circle for pollinated
+            # hollow circles for pollinated
             drawCircle(self.x, self.y, self.radius, fill='white',
                            border=self.color, borderWidth=4)
             if self.toBePollinated: 
@@ -180,14 +179,16 @@ class Flower(object):
             inventory = app.player.inventory
             max = app.player.maxInventory
             if (len(inventory) <= max) and (self.isPollinator):
-                self.isGathered = True #not self.isGathered
-                if self.radius <= 30: #set the max radius of the flowers to 30
-                    self.radius += 1 
+                self.isGathered = True 
+                #set the max radius of the flowers to 30
+                maxFlowerRadius = 30
+                if self.radius <= maxFlowerRadius: 
+                    self.radius += 1 #increment of the radius
             if ((len(inventory) >= 0) and (self.color in inventory) and 
                 (not self.isPollinator)): 
                 self.toBePollinated = True 
                 if self.radius <= 30:
-                    self.radius += 1 
+                    self.radius += 1 #increment of the radius
                 inventory.remove(self.color)
 
     def redraw(self, x=None, y=None):
@@ -238,6 +239,7 @@ def removeFlowers(app):
     i = 0
     while i < len(app.flowers):
         flower = app.flowers[i]
+        #remove the flower that is outside of the cavas
         if flower.y < - flower.radius:
             app.flowers.pop(i)
         else:
@@ -245,7 +247,9 @@ def removeFlowers(app):
 
 def generateFlowers(app):
     #generate 4 flowers per second with a total of 30 flowers on the screen
-    if (app.flowerSteps % app.flowerPerSecond == 0) and (len(app.flowers) < 30):
+    totalFlowerNumber = 30
+    if ((app.flowerSteps % app.flowerPerSecond == 0) and 
+        (len(app.flowers) <= totalFlowerNumber)):
         #randomly generate pollinator or pollinated
         isPollinator = random.choice([True, False])
         app.flowers.append(Flower(isPollinator, app))

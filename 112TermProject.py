@@ -24,9 +24,11 @@ from PIL import Image
 # --------------------------------------------------------------------------
 
 class Bird:
+    inventory = []
     def __init__(self):
         #self.flagBirdWings()
         self.birdCounter = 0
+        self.maxInventory = 6 #pollen inventory can hold up to 6 colors
     
     def flagBirdWings(self):
         # The bird picture is from 
@@ -67,33 +69,33 @@ class Bird:
 # --------------------------------------------------------------------------
 
 class Player(Bird):
-    def __init__(self, locX, locY):
+
+    def __init__(self, x, y):
         super().__init__()
-        self.locX = locX
-        self.locY = locY
-        self.cursorX = locX 
-        self.cursorY = locY 
+        self.x = x
+        self.y = y
+        self.cursorX = x 
+        self.cursorY = y 
         self.playerSteps = 0
         self.playerStepsPerSecond = 4
         self.birds = self.flagBirdWings()
-        self.pollens = []
     
     def drawPlayer(self, app):
-        drawCircle(self.locX, self.locY, 30, fill='cyan')
+        drawCircle(self.x, self.y, 30, fill='cyan')
         # birdImage = self.birds[self.birdCounter]
-        # drawImage(birdImage, self.locX, self.locY, align='center')
+        # drawImage(birdImage, self.x, self.y, align='center')
 
     def playerOnStep(self):
         self.makeMovement() #move locations to the cursors
-        self.birdCounter = (1 + self.birdCounter) % len(self.birds)
+        #self.birdCounter = (1 + self.birdCounter) % len(self.birds)
        
     def makeMovement(self):
         #get the movement distance between the cursor and current locations
-        moveDistanceX = self.cursorX - self.locX
-        moveDisctanceY = self.cursorY - self.locY
+        moveDistanceX = self.cursorX - self.x
+        moveDisctanceY = self.cursorY - self.y
         #update the locations
-        self.locX += moveDistanceX / 8
-        self.locY += moveDisctanceY / 8
+        self.x += moveDistanceX / 8
+        self.y += moveDisctanceY / 8
 
     def getTarget(self):
         pass
@@ -104,8 +106,10 @@ class Player(Bird):
     def gather(self, other):
         pass
 
-    def redraw(self, canvas):
-        pass
+    def drawInventory(self, app):
+        for i in range(len(Player.inventory)):
+            color = Player.inventory[i]
+            drawCircle(10+i*15, 10, 10, fill=color)
 
 
 # --------------------------------------------------------------------------
@@ -138,38 +142,60 @@ class Flower(object):
     #     pass
 
     def __init__(self, isPollinator, app):
-        self.radius = 10
+        self.radius = 20
         self.x = random.randint(self.radius, app.width - self.radius)
         self.y = app.height - self.radius
         # True pollinator else pollinated
         self.isPollinator = isPollinator 
-        self.color = {'isPollinator': 'purple', 'pollinated': 'pink'}
-    
-    def __repr__(self):
-        return f"{self.isPollinator}"
+        self.color = random.choice(['green', 'pink', 'yellow'])
+        self.isGathered = False
+        self.toBePollinated = False
 
     def drawFlower(self, app):
-        if self.isPollinator:
-            drawCircle(self.x, self.y, self.radius, fill='white',
-                           border='red', borderWidth=4)
+        if self.isPollinator:    
+            #solid color for pollinator
+            drawCircle(self.x, self.y, self.radius, fill=self.color)
+            if self.isGathered:
+                drawCircle(self.x, self.y, self.radius, fill = 'white',
+                            border=self.color, borderWidth=4)
         else:
-            drawCircle(self.x, self.y, self.radius, fill='purple')
-                #    fill=self.color['isPollinator'] 
-                #    if self.isPollinator else self.color['pollinated'])
+            # hollow circle for pollinated
+            drawCircle(self.x, self.y, self.radius, fill='white',
+                           border=self.color, borderWidth=4)
+            if self.toBePollinated: 
+                drawCircle(self.x, self.y, self.radius, fill=self.color)
 
     def flowerOnStep(self):
-        self.y -= 8
+        movingSpeed = 5
+        self.y -= movingSpeed
 
     def inView(self):
         pass
 
-    def gather(self, got):
-        pass
+    def gather(self, app):
+        #checked if player interacts with the flower
+        withinRange = Flower.distance(self.x, self.y, 
+                        app.player.cursorX, app.player.cursorY) <= self.radius 
+        if withinRange:
+            inventory = app.player.inventory
+            max = app.player.maxInventory
+            if (len(inventory) <= max) and (self.isPollinator):
+                self.isGathered = True #not self.isGathered
+                if self.radius <= 30: #set the max radius of the flowers to 30
+                    self.radius += 1 
+            if ((len(inventory) >= 0) and (self.color in inventory) and 
+                (not self.isPollinator)): 
+                self.toBePollinated = True 
+                if self.radius <= 30:
+                    self.radius += 1 
+                inventory.remove(self.color)
 
     def redraw(self, x=None, y=None):
         pass
 
-
+    @staticmethod
+    def distance(x0, y0, x1, y1):
+        return math.sqrt((x0 - x1) ** 2 + (y0 - y1) ** 2)
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
@@ -178,25 +204,36 @@ class Flower(object):
 # --------------------------------------------------------------------------
 
 def onAppStart(app):
-    app.player1 = Player(400, 400)
-    flower1 = Flower(True, app)
-    flower2 = Flower(False, app)
-    app.flowers = [flower1, flower2]
+    reset(app)
+
+def reset(app):
+    app.player = Player(400, 400)
+    app.flowers = []
     app.flowerPerSecond = 4
     app.flowerSteps = 0
 
+def onKeyPress(app, key):
+    if key == 'r':
+        reset(app)
+
 def onMouseMove(app, x, y):
-    app.player1.cursorX = x
-    app.player1.cursorY = y
+    app.player.cursorX = x
+    app.player.cursorY = y
 
 def onStep(app):
-    app.player1.playerOnStep()
+    app.player.playerOnStep()
     app.flowerSteps += 1
     removeFlowers(app)
     generateFlowers(app)
     for flower in app.flowers:
         flower.flowerOnStep()
-    
+        inventory = app.player.inventory
+        max = app.player.maxInventory
+        if ((flower.isGathered) and (flower.isPollinator) and 
+            (len(inventory) <= max)):
+            inventory.append(flower.color)
+        flower.gather(app)
+        
 def removeFlowers(app):
     i = 0
     while i < len(app.flowers):
@@ -207,13 +244,16 @@ def removeFlowers(app):
             i += 1
 
 def generateFlowers(app):
-    if (app.flowerSteps % app.flowerPerSecond == 0) and (len(app.flowers) < 15):
+    #generate 4 flowers per second with a total of 30 flowers on the screen
+    if (app.flowerSteps % app.flowerPerSecond == 0) and (len(app.flowers) < 30):
+        #randomly generate pollinator or pollinated
         isPollinator = random.choice([True, False])
         app.flowers.append(Flower(isPollinator, app))
 
 def redrawAll(app):
     drawTitle(app)
-    app.player1.drawPlayer(app)
+    app.player.drawPlayer(app)
+    app.player.drawInventory(app)
     for flower in app.flowers:
         flower.drawFlower(app)
 

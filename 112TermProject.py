@@ -147,10 +147,6 @@ class Helper(Bird):
 
 class Flower(object):
 
-    # @staticmethod
-    # def update():
-    #     pass
-
     def __init__(self, isPollinator, app):
         # initiate flower radius to be 20
         self.radius = 20
@@ -286,7 +282,7 @@ def onStep(app):
 
     #remove flowers when they are outside the canvas
     removeFlowers(app)
-    #generate flowers periodocally
+    #generate flowers periodically
     generateFlowers(app)
     # update inventory every step
     updateInventory(app)
@@ -331,7 +327,7 @@ def redrawAll(app):
         flower.drawFlower(app)
 
 def drawTitle(app):
-    drawLabel('A Game of Flying Birds', 700, 30, size=30)
+    drawLabel('A Game of Flying Birds', app.width // 2, 30, size=30)
 
 def main():
     runApp(width=1400, height=700)

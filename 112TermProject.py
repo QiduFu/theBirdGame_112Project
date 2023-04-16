@@ -47,6 +47,8 @@ class Bird(object):
         self.birdCounter = 0
         self.stepCounter = 0
 
+    
+
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
 # # # The BIRD (Player bird)----------------------------------------------------
@@ -70,11 +72,11 @@ class Player(Bird):
         self.playerStepsPerSecond = 4
 
     def playerOnStep(self, app):
-        self.moveToCursor() #move locations towards the cursors
+        #move locations towards the cursors
+        self.moveToCursor() 
         #update the inventory per step
         self.updateInventory(app)
-        #remove flowers outside of the canvas per step
-        self.removeFlowersOffCanvas(app)
+
         self.stepCounter += 1
         if self.stepCounter >= 5: #update the sprite every 5 steps
             #This line is from 112's course note
@@ -97,30 +99,58 @@ class Player(Bird):
         #update the  coordinates of the dot on birds' feet
         self.dotX = self.x
         self.dotY = self.y
-
-    def removeFlowersOffCanvas(self, app):
-        index = 0
-        while index < len(app.flowers):
-            flower = app.flowers[index]
-            #remove the flower moving outside of the cavas
-            if flower.y <= (-flower.radius):
-                app.flowers.pop(index)
-            else:
-                index += 1
     
     def updateInventory(self, app):
         inventory = self.inventory
         maxCapacity = self.inventoryCapacity 
         for flower in app.flowers:
             flower.flowerOnStep(app)
-            if ((flower.isGathered) and (flower.isPollinator)):
+            if (flower.isGathered): #and (flower.isPollinator)):
                 if len(inventory) == maxCapacity:
                     # remove the oldest from inventory before adding
                     inventory.pop(0) 
                 inventory.append(flower.color)
                 flower.isGathered = False
-            flower.gatherAndPollinated(app)
-    
+            #flower.gatherAndPollinated(app)
+            self.gatherAndPollinated(app, flower)
+
+    def gatherAndPollinated(self, app, flower):
+        #checked if the dot on bird's feet interacts with the flower
+        isInteracted = Flower.distance(self.dotX, self.dotY, 
+                                    flower.x, flower.y) <= flower.radius
+        
+        if isInteracted:
+            self.gather(app, flower)
+            self.pollinated(flower)
+
+    def gather(self, app, flower):
+        # gather the flowers/pollination from pollinators
+        if ((flower.isPollinator) and 
+            (flower.gatheredTimes > 0) and 
+            #each gather takes 1 sec. Fully gathering takes 2s per flower.
+            (app.stepCounter % app.flowerPerSecond == 0)): 
+
+            flower.gatheredTimes -= 1
+            flower.isGathered = True
+            
+            #flowers grows when it is gathered
+            flower.growing = True
+
+    def pollinated(self, flower):
+        inventory = self.inventory
+        #pollinate when the inventory has the correct colors
+        if ((len(inventory) >= 0) and (flower.color in inventory) and 
+            (not flower.isPollinator) and (flower.pollinatedTimes == 1)): 
+            flower.isPollinated = True 
+            flower.pollinatedTimes -= 1
+
+            # when pollinated, flowers grow
+            flower.growing = True
+
+            # #update the inventory
+            inventory.remove(flower.color)
+
+
     def redrawBird(self, app):
         self.drawPlayer(app)
         self.drawInventory(app)
@@ -168,7 +198,8 @@ class Helper(Player):
         self.target = None
 
     def helperOnStep(self, app):
-        self.moveToTarget(app) #helper birds move towards the taget
+        #helper birds move towards the taget
+        self.moveToTarget(app) 
         self.stepCounter += 1
         if self.stepCounter >= 5: #update the sprite every 5 steps
             #This line is from 112's course note
@@ -245,8 +276,8 @@ class Flower(object):
         #initia flower colors
         self.color = random.choice(['cyan', 'pink', 'yellow'])
         
-        #indicator for flowers ready to be pollinated
-        self.toBePollinated = False
+        #indicator for flowers are pollinated
+        self.isPollinated = False
         #check if a flower is gathered
         self.isGathered = False
         #check if a flower is growing
@@ -254,20 +285,70 @@ class Flower(object):
 
         #initia dx offset, I think 8 is the best for my game
         self.dx = math.sin(8 * self.y) 
-
     
     def flowerOnStep(self, app):
         movingSpeed = 5
         self.y -= movingSpeed
-
-        #set the max radius of the flowers to 30
-        maxFlowerRadius = 30  
-        if (self.growing == True) and (self.radius <= maxFlowerRadius):
-            self.radius += 2 # radius grows by 2 per call
-
+        #update radius per call when it is growing
+        if (self.growing == True):
+            self.updateRadius()
         # update position through the offset
+        self.updateLocation(app)
+    
+    def updateRadius(self):
+        #set the max radius of the flowers to 30
+        maxRadius = 30
+        #set the medium raidus to 25
+        midRadius = 25
+        #radius grows by 2 per call
+        growingSpeed = 2
+        if self.gatheredTimes == 1:
+            #when the pollinator is not fulled gathered
+            self.radius = min(self.radius + growingSpeed, midRadius)
+        else:
+            # if its pollinated/fullly gathered
+            self.radius = min(self.radius + growingSpeed, maxRadius)
+
+    def updateLocation(self, app):
         if (self.x > self.radius) and (self.x < app.height):
             self.x -= self.dx        
+
+
+    # def gatherAndPollinated(self, app):
+    #     #checked if the dot on bird's feet interacts with the flower
+    #     isInteracted = Flower.distance(self.x, self.y, 
+    #                     app.player.dotX, app.player.dotY) <= self.radius
+        
+    #     if isInteracted:
+    #         self.gather(app)
+    #         self.pollinated(app)
+
+    # def gather(self, app):
+    #     # gather the flowers/pollination from pollinators
+    #     if ((self.isPollinator) and 
+    #         (self.gatheredTimes > 0) and 
+    #         #each gather takes 1 sec. Fully gathering takes 2s per flower.
+    #         (app.stepCounter % app.flowerPerSecond == 0)): 
+
+    #         self.gatheredTimes -= 1
+    #         self.isGathered = True
+            
+    #         #flowers grows when it is gathered
+    #         self.growing = True
+
+    # def pollinated(self, app):
+    #     inventory = app.player.inventory
+    #     #pollinate when the inventory has the correct colors
+    #     if ((len(inventory) >= 0) and (self.color in inventory) and 
+    #         (not self.isPollinator) and (self.pollinatedTimes == 1)): 
+    #         self.isPollinated = True 
+    #         self.pollinatedTimes -= 1
+
+    #         # when pollinated, flowers grow
+    #         self.growing = True
+
+    #         # #update the inventory
+    #         inventory.remove(self.color)
 
     def drawFlower(self, app):
         if self.isPollinator:    
@@ -282,59 +363,21 @@ class Flower(object):
 
             # gathered the first time: ringed circles
             if self.gatheredTimes == 1:
-                drawCircle(self.x, self.y, self.radius, fill='lightGreen',
+                drawCircle(self.x, self.y, self.radius, fill=app.background,
                         border=self.color, borderWidth=4)
                 drawCircle(self.x, self.y, 10, fill=self.color)
             
             # # second gathered pollnation: hollow circles
             if self.gatheredTimes == 0:
-                drawCircle(self.x, self.y, self.radius, fill='lightGreen',
+                drawCircle(self.x, self.y, self.radius, fill=app.background,
                                 border=self.color, borderWidth=4)
     
     def drawPollinated(self, app):
             # hollow circles for being pollinated
-            drawCircle(self.x, self.y, self.radius, fill='lightGreen',
+            drawCircle(self.x, self.y, self.radius, fill=app.background,
                            border=self.color, borderWidth=4)
-            if self.toBePollinated: 
+            if self.isPollinated: 
                 drawCircle(self.x, self.y, self.radius, fill=self.color)
-
-    def gatherAndPollinated(self, app):
-        #checked if the dot on bird's feet interacts with the flower
-        isInteracted = False
-        if (app.player.dotX != None) and (app.player.dotY != None):
-            isInteracted = Flower.distance(self.x, self.y, 
-                            app.player.dotX, app.player.dotY) <= self.radius
-        
-        if isInteracted:
-            self.gather(app)
-            self.pollinated(app)
-
-    def gather(self, app):
-        # gather the flowers/pollination from pollinators
-        if ((self.isPollinator) and 
-            (self.gatheredTimes > 0) and 
-            #each gather takes 1 sec. Fully gathering takes 2s per flower.
-            (app.stepCounter % app.flowerPerSecond == 0)): 
-
-            self.gatheredTimes -= 1
-            self.isGathered = True
-            
-            #flowers grows when it is gathered
-            self.growing = True
-
-    def pollinated(self, app):
-        inventory = app.player.inventory
-        #pollinate when the inventory has the correct colors
-        if ((len(inventory) >= 0) and (self.color in inventory) and 
-            (not self.isPollinator) and (self.pollinatedTimes == 1)): 
-            self.toBePollinated = True 
-            self.pollinatedTimes -= 1
-
-            # when pollinated, flowers grow
-            self.growing = True
-
-            #update the inventory
-            inventory.remove(self.color)
 
     @staticmethod
     def distance(x0, y0, x1, y1):
@@ -385,14 +428,12 @@ def takeStep(app):
         app.helper1.helperOnStep(app)
         app.helper2.helperOnStep(app)
         
-    # update the text size per call
-    updateInstuctionTextSize(app)
     #remove flowers when they are outside the canvas
-    #removeFlowers(app)
+    removeFlowersOffCanvas(app)
     #generate flowers periodically
     generateFlowers(app)
-    # update inventory every step
-    #updateInventory(app)
+    #update the text size per call
+    updateInstuctionTextSize(app)
     app.stepCounter += 1
 
 def updateInstuctionTextSize(app):
@@ -402,29 +443,16 @@ def updateInstuctionTextSize(app):
     else:
         #text size decreases 0.2 per call
         app.textSize -= .2
-
-# def updateInventory(app):
-#     inventory = app.player.inventory
-#     maxCapacity = app.player.inventoryCapacity 
-#     for flower in app.flowers:
-#         flower.flowerOnStep(app)
-#         if ((flower.isGathered) and (flower.isPollinator)):
-#             if len(inventory) == maxCapacity:
-#                 # remove the oldest from inventory before adding
-#                 inventory.pop(0) 
-#             inventory.append(flower.color)
-#             flower.isGathered = False
-#         flower.gatherAndPollinated(app)
         
-# def removeFlowers(app):
-#     index = 0
-#     while index < len(app.flowers):
-#         flower = app.flowers[index]
-#         #remove the flower moving outside of the cavas
-#         if flower.y < (-flower.radius):
-#             app.flowers.pop(index)
-#         else:
-#             index += 1
+def removeFlowersOffCanvas(app):
+    index = 0
+    while index < len(app.flowers):
+        flower = app.flowers[index]
+        #remove the flower moving outside of the cavas
+        if flower.y < (-flower.radius):
+            app.flowers.pop(index)
+        else:
+            index += 1
 
 def generateFlowers(app):
     #generate 4 flowers per second with a total of 30 flowers on the screen

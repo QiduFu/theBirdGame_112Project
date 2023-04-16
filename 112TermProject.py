@@ -39,22 +39,13 @@ class Bird(object):
         url = 'birdPic.png'
         birdImage = Image.open(url)
         birdImageNum = 3 
-        for i in range(birdImageNum):
-            bird = birdImage.crop((320*i, 0, 320*(i+1), 1232))
+        for index in range(birdImageNum):
+            bird = birdImage.crop((320*index, 0, 320*(index+1), 1232))
             imageWidth, imageHeight = bird.width, bird.height
             self.birdWidth, self.birdHeight = (imageWidth//3, imageHeight//3)
             self.birds.append(CMUImage(bird))
         self.birdCounter = 0
         self.stepCounter = 0
-
-    def getTarget(self):
-        pass
-
-    def getHeldColors(self):
-        pass
-
-    def gatherAndPollinated(self, other):
-        pass
 
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
@@ -62,133 +53,19 @@ class Bird(object):
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
 
-# class Player(Bird):
-
-#     def __init__(self, x, y):
-#         super().__init__()
-#         self.x, self.y = x, y
-#         self.cursorX, self.cursorY= x, y
-#         self.birdFeetX, self.birdFeetY = x, y
-#         self.dotX, self.dotY = None, None
-#         self.playerSteps = 0
-#         self.playerStepsPerSecond = 4
-#         self.target = None
-
-#     def drawPlayer(self, app):
-#         self.drawBird(app)
-#         #draw the dots carried by the bird's feet
-#         self.drawDot(app)
-    
-#     def drawBird(self, app):
-#         bird = self.birds[self.birdCounter]
-#         drawImage(bird, self.birdFeetX, self.birdFeetY, align='center', 
-#                   width=self.birdWidth, height=self.birdHeight)
-
-#     def drawDot(self, app):
-#         # if the inventory not empty draw the carrying dot to the bird's feet
-#         if (self.dotX != None) and len(self.inventory) > 0:
-#             # latestColor = self.inventory[-1]
-#             # drawCircle(self.dotX, self.dotY, 10, fill=latestColor)
-#             increment = 0
-#             colorsDrawn = set()
-#             for color in self.inventory:
-#                 #only draw  the dot with color which has not been drawn
-#                 if color not in colorsDrawn:
-#                     drawCircle(self.dotX + increment, self.dotY, 10, fill=color)
-#                     increment += 5
-#                     colorsDrawn.add(color)
-
-#     def playerOnStep(self, app):
-#         self.moveToCursor() #move locations towards the cursors
-#         self.moveToTarget(app) #helper birds move towards the taget
-#         self.stepCounter += 1
-#         print(self.target)
-#         if self.stepCounter >= 5: #update the sprite every 5 steps
-#             #This line is from 112's course note
-#             self.birdCounter = (1 + self.birdCounter) % len(self.birds)
-#             self.stepCounter = min(0, self.stepCounter)
-
-#     def moveToTarget(self, app):
-#         if self.target != None:
-#             print('entering not none')
-#             if self.isLegalTarget():
-#                 self.makeTargetMove()
-#             else:
-#                 self.target = None
-#         if self.target == None:
-#             print('---gettarget')
-#             self.getTarget(app)
-
-#     def makeTargetMove(self):
-#         targetX, targetY = self.target.x, self.target.y
-        
-#         #get the movement distances between the target and current locations
-#         distanceX = targetX - self.x
-#         distanceY = targetY - self.y
-
-#         #update the birds' locations with 1/8 of the current distances
-#         self.x += distanceX / 8
-#         self.y += distanceY / 8
-
-#         # #make up the different between the bird's feet and cursor locations
-#         # self.birdFeetX = self.x - 2
-#         # self.birdFeetY = self.y + 135
-
-#         #update the  coordinates of the dot on birds' feet
-#         self.dotX = self.x
-#         self.dotY = self.y
-    
-#     def isLegalTarget(self):
-#         return (((self.target.gatheredTimes != 0) or # can be gathered 
-#                 (self.target.pollinatedTimes != 0)) and # not pollinated
-#                 (self.target.y <= -self.target.radius)) # on canvas
-
-#     def getTarget(self, app):
-#         shortestDist = None
-#         for flower in app.flowers:
-#             if (flower.gatheredTimes != 0) or (flower.pollinatedTimes != 0):
-#                 print('gathered adn pollianated')
-#                 if (self.dotX != None) and (self.dotY != None):
-#                     print('target====', self.dotX, self.dotY, flower.x, flower.y)
-#                     currentDist = flower.distance(self.dotX, self.dotY, 
-#                                               flower.x, flower.y)
-#                     if (shortestDist == None) or (shortestDist > currentDist):
-#                         shortestDist = currentDist
-#                         self.target = flower
-
-#     def moveToCursor(self):
-#         #get the movement distances between the cursor and current locations
-#         distanceX = self.cursorX - self.x
-#         distanceY = self.cursorY - self.y
-
-#         #update the birds' locations with 1/8 of the current distances
-#         self.x += distanceX / 8
-#         self.y += distanceY / 8
-
-#         #make up the different between the bird's feet and cursor locations
-#         self.birdFeetX = self.x - 2
-#         self.birdFeetY = self.y + 135
-
-#         #update the  coordinates of the dot on birds' feet
-#         self.dotX = self.x
-#         self.dotY = self.y
-
-#     def drawInventory(self, app):
-#         for i in range(len(self.inventory)):
-#             color = self.inventory[i]
-#             drawCircle(20+i*25, 20, 20, fill=color)
-#             #label the inventory colors with numbers starting from 1
-#             drawLabel(f'{i+1}', 20+i*25, 20)
-
-
 class Player(Bird):
 
     def __init__(self, x, y):
         super().__init__()
         self.x, self.y = x, y
         self.cursorX, self.cursorY= x, y
+
+        #initiate the positions for birds' feet
         self.birdFeetX, self.birdFeetY = x, y
+        #initiate the positions for the dots' on bird feet, which are different
+        #from the birds' feet due to the image issues
         self.dotX, self.dotY = None, None
+
         self.playerSteps = 0
         self.playerStepsPerSecond = 4
 
@@ -199,14 +76,13 @@ class Player(Bird):
     
     def drawBird(self, app):
         bird = self.birds[self.birdCounter]
+        # due to the image issues, the bird is drawn the its feet
         drawImage(bird, self.birdFeetX, self.birdFeetY, align='center', 
                   width=self.birdWidth, height=self.birdHeight)
 
     def drawDot(self, app):
         # if the inventory not empty draw the carrying dot to the bird's feet
         if (self.dotX != None) and len(self.inventory) > 0:
-            latestColor = self.inventory[-1]
-            drawCircle(self.dotX, self.dotY, 10, fill=latestColor)
             increment = 0 # increment of X when drawing the dot on bird's feet
             colorsDrawn = set()
             for color in self.inventory:
@@ -235,22 +111,13 @@ class Player(Bird):
         self.x += distanceX / 6
         self.y += distanceY / 6
 
-        #make up the different between the bird's feet and cursor locations
+        #make up the misplacement between the bird's feet and cursor locations
         self.birdFeetX = self.x - 2
         self.birdFeetY = self.y + 135
 
         #update the  coordinates of the dot on birds' feet
         self.dotX = self.x
         self.dotY = self.y
-
-    def getTarget(self):
-        pass
-
-    def getHeldColors(self):
-        pass
-
-    def gatherAndPollinated(self, other):
-        pass
 
     def drawInventory(self, app):
         for i in range(len(self.inventory)):
@@ -269,12 +136,12 @@ class Helper(Player):
 
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.x, self.y = x, y
-        self.cursorX, self.cursorY= x, y
-        self.birdFeetX, self.birdFeetY = x, y
-        self.dotX, self.dotY = None, None
-        self.playerSteps = 0
-        self.playerStepsPerSecond = 4
+        # self.x, self.y = x, y
+        # self.cursorX, self.cursorY= x, y
+        # self.birdFeetX, self.birdFeetY = x, y
+        # self.dotX, self.dotY = None, None
+        # self.playerSteps = 0
+        # self.playerStepsPerSecond = 4
         self.target = None
 
     def drawPlayer(self, app):
@@ -414,7 +281,7 @@ class Flower(object):
         #check if a flower is gathered
         self.isGathered = False
         #check if a flower is growing
-        self.isGrowing = False
+        self.growing = False
 
         #initia dx offset, I think 8 is the best for my game
         self.dx = math.sin(8 * self.y) 
@@ -426,7 +293,7 @@ class Flower(object):
 
         #set the max radius of the flowers to 30
         maxFlowerRadius = 30  
-        if (self.isGrowing == True) and (self.radius <= maxFlowerRadius):
+        if (self.growing == True) and (self.radius <= maxFlowerRadius):
             self.radius += 2 # radius grows by 2 per call
 
         # update position through the offset
@@ -484,7 +351,7 @@ class Flower(object):
             self.isGathered = True
             
             #flowers grows when it is gathered
-            self.isGrowing = True
+            self.growing = True
 
     def pollinated(self, app):
         inventory = app.player.inventory
@@ -495,7 +362,7 @@ class Flower(object):
             self.pollinatedTimes -= 1
 
             # when pollinated, flowers grow
-            self.isGrowing = True
+            self.growing = True
 
             #update the inventory
             inventory.remove(self.color)
@@ -519,9 +386,9 @@ def reset(app):
     app.flowers = []
     app.flowerPerSecond = 4
     app.stepCounter = 0
-    app.paused = False
     app.textPerSecond = 4
     app.textSize = 30 #initiate the size instruciton text   
+    app.paused = False
     app.helper1 = None
     app.helper2 = None
 
@@ -615,44 +482,63 @@ def redrawAll(app):
         flower.drawFlower(app)
 
 def drawInstructionText(app):
-    # print(app.stepCounter)
-    counter = app.stepCounter % 5000
-    if app.paused == True:
-        drawUnpause(app)
-    elif 0 < counter < 50:
-        drawGoodLuck(app)
-    elif 200 < counter < 250:
-        drawEnjoy(app)
-    elif 400 < counter < 450:
-        drawPause(app)
-    elif 600 < counter < 650:
-        drawGetHelperText(app)
-    elif 800 < counter < 850:
-        drawReset(app)
+    #draw the below instructions every 2000 calls
+    counter = app.stepCounter % 2000
 
-def drawReset(app):
-    drawLabel('Press r to restart the game!', app.width//2, app.height//2, 
+    #while the game is paused, show instruction to unpause the game
+    if app.paused == True:
+        drawContinueText(app)
+
+    #while the game playing, to enhance user experience, 
+    #show the below text when the remainder/counter satifies the below. 
+    elif 0 < counter < 50: 
+        text = 'Good luck with playing'
+        drawPlayingText(app, text)
+        # drawGoodLuck(app)
+    elif 200 < counter < 250:
+        text = 'Enjoy the game!'
+        drawPlayingText(app, text)
+        # drawEnjoy(app)
+    elif 400 < counter < 450:
+        text = 'Press p to pause the game'
+        drawPlayingText(app, text)
+        # drawPause(app)
+    elif 600 < counter < 650:
+        text = 'Press h to get helper birds'
+        drawPlayingText(app, text)
+        # drawGetHelperText(app)
+    elif 800 < counter < 850:
+        text = 'Press r to restart the game!'
+        drawPlayingText(app, text)
+        # drawReset(app)
+
+def drawContinueText(app):
+    drawLabel('Press p to unpause and continue the game', 
+              app.width//2, app.height//2, size=30)
+
+def drawPlayingText(app, text):
+    drawLabel(f'{text}', app.width//2, app.height//2, 
             size=app.textSize if app.textSize > 0 else 0)
 
-def drawGetHelperText(app):
-    drawLabel('Press h to get helper birds', app.width//2, app.height//2, 
-                size=app.textSize if app.textSize > 0 else 0)    
+# def drawGoodLuck(app):
+#     drawLabel('Good luck with playing', app.width//2, app.height//2, 
+#                 size=app.textSize if app.textSize > 0 else 0)
 
-def drawUnpause(app):
-    drawLabel('Press p to unpause the game', app.width//2, app.height//2, 
-                   size=30)
+# def drawEnjoy(app):
+#     drawLabel('Enjoy the game!', app.width//2, app.height//2, 
+#                 size=app.textSize if app.textSize > 0 else 0)
 
-def drawEnjoy(app):
-    drawLabel('Enjoy the game!', app.width//2, app.height//2, 
-                size=app.textSize if app.textSize > 0 else 0)
+# def drawPause(app):
+#     drawLabel('Press p to pause the game', app.width//2, app.height//2, 
+#                 size=app.textSize if app.textSize > 0 else 0)
 
-def drawGoodLuck(app):
-    drawLabel('Good luck with playing', app.width//2, app.height//2, 
-                size=app.textSize if app.textSize > 0 else 0)
+# def drawGetHelperText(app):
+#     drawLabel('Press h to get helper birds', app.width//2, app.height//2, 
+#                 size=app.textSize if app.textSize > 0 else 0)    
 
-def drawPause(app):
-    drawLabel('Press p to pause the game', app.width//2, app.height//2, 
-                size=app.textSize if app.textSize > 0 else 0)
+# def drawReset(app):
+#     drawLabel('Press r to restart the game!', app.width//2, app.height//2, 
+#             size=app.textSize if app.textSize > 0 else 0)
 
 def drawTitle(app):
     drawLabel('A Game of Flying Birds', app.width // 2, 30, size=30)

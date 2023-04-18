@@ -12,7 +12,7 @@
 
 from cmu_graphics import *
 import random
-import math, time
+import math
 from PIL import Image
 
 # --------------------------------------------------------------------------
@@ -26,7 +26,7 @@ class Bird(object):
     def __init__(self):
         self.inventory = []
         self.birdCounter = 0
-        self.inventoryCapacity = 6 #pollen inventory can hold up to 6 colors
+        self.stepCounter = 0
         self.birds = []
 
         # initiate the resized bird's image width and height
@@ -34,19 +34,21 @@ class Bird(object):
 
         # load the bird picture
                 # The bird picture is from 
-                # https://www.pngitem.com/middle/
+                # URL: https://www.pngitem.com/middle/
                 # ihbJiib_transparent-bird-bird-sprite-sheet-png-png-download/
         url = 'birdPic.png'
         birdImage = Image.open(url)
         birdImageNum = 3 
         #crop the bird picture and store the sprite bird pic into the birds list
+        # next 5 lines are adaptations of 15112's course note: 
+                # URL: http://www.cs.cmu.edu/~112-f22/notes
+                # /notes-animations-part4.html#spritesheetsWithCropping
         for index in range(birdImageNum):
             bird = birdImage.crop((320*index, 0, 320*(index+1), 1232))
             imageWidth, imageHeight = bird.width, bird.height
             self.birdWidth, self.birdHeight = (imageWidth//3, imageHeight//3)
             self.birds.append(CMUImage(bird))
-        self.birdCounter = 0
-        self.stepCounter = 0
+        
     
 
 # # --------------------------------------------------------------------------
@@ -60,6 +62,8 @@ class Player(Bird):
     def __init__(self, x, y):
         super().__init__()
         self.x, self.y = x, y
+        
+        #initiate cursor position to be the same as the bird position
         self.cursorX, self.cursorY= x, y
 
         #initiate the positions for birds' feet
@@ -67,6 +71,9 @@ class Player(Bird):
         #initiate the positions for the dots' on bird feet, which are different
         #from the birds' feet due to the image issues
         self.dotX, self.dotY = x, y
+
+        #indicate if the bird's heading direction is changed or not
+        self.changingDirection = False
 
         self.playerSteps = 0
         self.playerStepsPerSecond = 4
@@ -80,7 +87,9 @@ class Player(Bird):
         self.updateInventory(app)
 
         self.stepCounter += 1
-        #The next 4 lines are adaptation of 112's course note
+        #The next 2 lines are adaptation of 112's course note
+        # URL: http://www.cs.cmu.edu/~112-f22/notes
+        # /notes-animations-part4.html#spritesheetsWithCropping
         if self.stepCounter >= 5: #update the sprite every 5 steps
             self.birdCounter = (1 + self.birdCounter) % len(self.birds)
             self.stepCounter = min(0, self.stepCounter)
@@ -117,7 +126,7 @@ class Player(Bird):
         # gather the flowers/pollination from pollinators
         if ((flower.isPollinator) and 
             (flower.gatheredTimes > 0) and 
-            #each gather takes 1 sec. Fully gathering takes 2s per flower.
+            #each gather takes 1 sec. Full gathering takes 2s per flower.
             (app.stepCounter % app.flowerPerSecond == 0)): 
             flower.gatheredTimes -= 1
             flower.isGathered = True
@@ -143,8 +152,9 @@ class Player(Bird):
         for flower in app.flowers:
             if ((flower.isPollinator) and (flower.isGathered)):
                 inventory = self.inventory
-                maxCapacity = self.inventoryCapacity 
-                if len(inventory) == maxCapacity:
+                # pollen inventory hold up to 6 flowers
+                inventoryCapacity = 6
+                if len(inventory) >= inventoryCapacity:
                     # remove the oldest from inventory before adding
                     inventory.pop(0) 
                 inventory.append(flower.color)
@@ -197,7 +207,7 @@ class Helper(Player):
         super().__init__(x, y)
         self.target = None
 
-    def playerOnStep(self, app):
+    def helperOnStep(self, app):
         #helper birds move towards the taget
         self.getTargetAndMakeMove(app) 
         #gather/pollinate flowers
@@ -286,15 +296,15 @@ class Helper(Player):
         #not fully gathered or unpollinated flowers
         if (flower.gatheredTimes != 0) or (flower.pollinatedTimes != 0):
             currentDist = Player.distance(self.dotX, self.dotY, 
-                                        flower.x, flower.y)
+                                          flower.x, flower.y)
             if (shortestDist == None) or (shortestDist > currentDist):
                 shortestDist = currentDist
                 self.target = flower
 
     def redrawBirdAll(self, app):
-        self.drawBird(app)
-        self.drawInventory(app)
-        self.drawDot(app)
+        self.drawBird(app) # draw the flying bird
+        self.drawInventory(app) # draw the inventory 
+        self.drawDot(app) # draw the dot on the bird feet
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
@@ -327,9 +337,10 @@ class Flower(object):
         #check if a flower is growing
         self.growing = False
 
-        #initia dx/dy offset, I think 8 for dx is the best for my game
-        self.dx = math.sin(8 * self.y) 
-        self.dy = 4
+        #initia dx/dy/ddx offset, I think 6 for dx is the best for my game
+        self.dx = math.sin(6 * self.y) 
+        self.dy = 5
+        self.ddx = 0.01
     
     def flowerOnStep(self, app):
         # update position through the offset
@@ -357,6 +368,7 @@ class Flower(object):
         self.y -= self.dy #update y
         if (self.x > self.radius) and (self.x < app.height):
             self.x -= self.dx #update x
+            self.dx += self.ddx
     
     def redrawFlower(self, app):
         self.drawFlower(app)
@@ -378,7 +390,7 @@ class Flower(object):
                         border=self.color, borderWidth=4)
                 drawCircle(self.x, self.y, 10, fill=self.color)
             
-            # # second gathered pollnation: hollow circles
+            # second gathered pollination: hollow circles
             if self.gatheredTimes == 0:
                 drawCircle(self.x, self.y, self.radius, fill=app.background,
                                 border=self.color, borderWidth=4)
@@ -390,26 +402,26 @@ class Flower(object):
             if self.isPollinated: 
                 drawCircle(self.x, self.y, self.radius, fill=self.color)
 
-    @staticmethod
-    def removeOffCanvasFlowers(app):
-        index = 0
-        while index < len(app.flowers):
-            flower = app.flowers[index]
-            #remove the flower moving outside of the cavas
-            if flower.y < (-flower.radius):
-                app.flowers.pop(index)
-            else:
-                index += 1
+    # @staticmethod
+    # def removeOffCanvasFlowers(app):
+    #     index = 0
+    #     while index < len(app.flowers):
+    #         flower = app.flowers[index]
+    #         #remove the flower moving outside of the cavas
+    #         if flower.y < 0:
+    #             app.flowers.pop(index)
+    #         else:
+    #             index += 1
                 
-    @staticmethod
-    def generateFlowers(app):
-        #generate 4 flowers per second with a total of 40 flowers on the screen
-        totalFlowerNumber = 40
-        if ((app.stepCounter % app.flowerPerSecond == 0) and 
-            (len(app.flowers) < totalFlowerNumber)):
-            #randomly generate pollinator or pollinated
-            isPollinator = random.choice([True, False])
-            app.flowers.append(Flower(isPollinator, app))
+    # @staticmethod
+    # def generateFlowers(app):
+    #     #generate 4 flowers per second with a total of 25 flowers on the screen
+    #     totalFlowerNumber = 25
+    #     if ((app.stepCounter % app.flowerPerSecond == 0) and 
+    #         (len(app.flowers) <= totalFlowerNumber)):
+    #         #randomly generate pollinator or pollinated
+    #         isPollinator = random.choice([True, False])
+    #         app.flowers.append(Flower(isPollinator, app))
 
 
 # --------------------------------------------------------------------------
@@ -425,10 +437,10 @@ def reset(app):
     app.background = 'lightGreen'
     app.player = Player(400, 400)
     app.flowers = []
-    app.flowerPerSecond = 4
+    app.flowerPerSecond = 5
     app.stepCounter = 0
-    app.textPerSecond = 4
     app.textSize = 30 #initiate the size instruciton text   
+    app.textShrikingSpeed = 0.2
     app.paused = False
     app.helper1 = None
     app.helper2 = None
@@ -439,8 +451,8 @@ def onKeyPress(app, key):
     elif key == 'p':
         app.paused = not app.paused
     elif key == 'h':
-        app.helper1 = Helper(100, 300)
-        app.helper2 = Helper(1300, 300)
+        app.helper1 = Helper(0, 0)
+        app.helper2 = Helper(app.width, app.height)
 
 def onMouseMove(app, x, y):
     app.player.cursorX = x
@@ -455,8 +467,8 @@ def takeStep(app):
 
     #update helper birds' calls if the birds exist
     if app.helper1 != None:
-        app.helper1.playerOnStep(app)
-        app.helper2.playerOnStep(app)
+        app.helper1.helperOnStep(app)
+        app.helper2.helperOnStep(app)
 
     for flower in app.flowers:
         flower.flowerOnStep(app)
@@ -471,17 +483,40 @@ def takeStep(app):
 
 def removeAndGenerateFlowers(app):
     #remove flowers when they are outside the canvas
-    Flower.removeOffCanvasFlowers(app)
+    # Flower.removeOffCanvasFlowers(app)
+    removeOffCanvasFlowers(app)
     #generate flowers periodically
-    Flower.generateFlowers(app)
+    # Flower.generateFlowers(app)
+    generateFlowers(app)
+
+def removeOffCanvasFlowers(app):
+    index = 0
+    while index < len(app.flowers):
+        flower = app.flowers[index]
+        #remove the flower moving outside of the cavas
+        if flower.y < 0:
+            app.flowers.pop(index)
+        else:
+            index += 1
+            
+def generateFlowers(app):
+    #generate 4 flowers per second with a total of 20 flowers on the screen
+    totalFlowerNumber = 20
+    if ((app.stepCounter % app.flowerPerSecond == 0) and 
+        (len(app.flowers) < totalFlowerNumber)):
+        #randomly generate pollinator or pollinated
+        isPollinator = random.choice([True, False])
+        app.flowers.append(Flower(isPollinator, app))
 
 def updateInstuctionTextSize(app):
-    #reset the instruction text size when it is below 0
-    if app.textSize < 0:
-        app.textSize = 30
+    #reset the instruction text size when it is <= 0
+    maxTextSize = 30
+    if app.textSize <= 0:
+        app.textSize = maxTextSize
     else:
         #text size decreases 0.2 per call
-        app.textSize -= 0.2
+        shrinkingSpeedPerCall = 0.2
+        app.textSize -= shrinkingSpeedPerCall
 
 def redrawAll(app):
     redrawTitle(app)
@@ -498,7 +533,7 @@ def redrawAll(app):
         flower.redrawFlower(app)
 
 def redrawAllInstructionText(app):
-    #draw the below instructions every 900 calls
+    #draw the below instructions once every 900 calls
     counter = app.stepCounter % 900
 
     #while the game is paused, show instruction to unpause the game
@@ -507,37 +542,38 @@ def redrawAllInstructionText(app):
 
     #while the game playing, to enhance user experience, 
     #show  text when the remainder/counter satifies the below periodically
-    elif 0 < counter < 150:  # textSize / shrinkingSpeed = 30/0.2 = 150
+    elif 0 <= counter < 150:  # textSize / shrinkingSpeed = 30/0.2 = 150
         text = 'Having fun :)'
         drawInstructionText(app, text)
-    elif 150 < counter < 300:
+    elif 150 <= counter < 300:
         text = "Move your cursor/bird's feet to gather/pollinate flowers"
         drawInstructionText(app, text)
-    elif 300 < counter < 450:
-        text = 'Enjoy the game'
+    elif 300 <= counter < 450:
+        text = 'Enjoy the game :)'
         drawInstructionText(app, text)
-    elif 450 < counter < 600:
+    elif 450 <= counter < 600:
         text = 'Press p to pause the game'
         drawInstructionText(app, text)
-    elif 600 < counter < 750:
+    elif 600 <= counter < 750:
         text = 'Press h to get helper birds'
         drawInstructionText(app, text)
-    elif 750 < counter < 900:
+    elif 750 <= counter < 900:
         text = 'Press r to restart the game'
         drawInstructionText(app, text)
 
 def drawToContinueText(app):
     drawLabel('Press p to unpause and continue the game', 
-              app.width//2, app.height//2, size=30)
+              app.width//2, app.height//2, size=30, bold=True)
 
 def drawInstructionText(app, text):
     if app.textSize > 0:
-        drawLabel(f'{text}', app.width//2, app.height//2, size=app.textSize)
+        drawLabel(f'{text}', app.width//2, app.height//2, 
+                             size=app.textSize, bold=True)
 
 def redrawTitle(app):
-    drawLabel('A Game of Flying Birds', app.width//2, 30, size=30)
+    drawLabel('A Game of Flying Birds', app.width//2, 30, size=30, bold=True)
 
 def main():
-    runApp(width=1400, height=700)
+    runApp(width=800, height=600)
 
 main()

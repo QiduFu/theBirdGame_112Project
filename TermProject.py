@@ -27,33 +27,42 @@ class Bird(object):
         self.inventory = []
         self.birdCounter = 0
         self.stepCounter = 0
-        self.birds = []
+        self.birdsImages = []
+        self.birdsImagesLeft = []
+        self.birdsImagesRight = []
 
         # initiate the resized bird's image width and height
         self.birdWidth, self.birdHeight = None, None 
 
-        # load the bird picture
-                # The bird picture is from 
-                # URL: https://www.pngitem.com/middle/
-                # ihbJiib_transparent-bird-bird-sprite-sheet-png-png-download/
-        url = 'birdPic.png'
-        birdImage = Image.open(url)
+        # loading bird images and make into a sprite image list
+        self.loadBirdImage()
+
+    def loadBirdImage(self):
+        # The bird picture is from 
+        # URL: https://www.pngitem.com/middle/
+        # ihbJiib_transparent-bird-bird-sprite-sheet-png-png-download/
+        orginalPicture = 'birdPic.png'
+        birdImage = Image.open(orginalPicture)
         birdImageNum = 3 
+
         #crop the bird picture and store the sprite bird pic into the birds list
-        # next 5 lines are adaptations of 15112's course note: 
-                # URL: http://www.cs.cmu.edu/~112-f22/notes
-                # /notes-animations-part4.html#spritesheetsWithCropping
         for index in range(birdImageNum):
             bird = birdImage.crop((320*index, 0, 320*(index+1), 1232))
             imageWidth, imageHeight = bird.width, bird.height
+
+            #bird image facing the right
+            self.birdsImagesRight.append(CMUImage(bird))
+
+            #bird image facing the left 
+            bird = bird.transpose(Image.FLIP_LEFT_RIGHT)
             self.birdWidth, self.birdHeight = (imageWidth//3, imageHeight//3)
-            self.birds.append(CMUImage(bird))
+            self.birdsImagesLeft.append(CMUImage(bird))
         
     
 
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
-# # # The BIRD (Player bird)----------------------------------------------------
+# # # The BIRD (Player bird)--------------------------------------------------
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
 
@@ -61,8 +70,14 @@ class Player(Bird):
 
     def __init__(self, x, y):
         super().__init__()
-        self.x, self.y = x, y
-        
+        self.x, self.y = x, y #bird location
+        self.inventory = []
+        # self.birdCounter = 0
+        # self.stepCounter = 0
+
+        # initiate the resized bird's image width and height
+        self.birdWidth, self.birdHeight = None, None 
+
         #initiate cursor position to be the same as the bird position
         self.cursorX, self.cursorY= x, y
 
@@ -73,12 +88,15 @@ class Player(Bird):
         self.dotX, self.dotY = x, y
 
         #indicate if the bird's heading direction is changed or not
-        self.changingDirection = False
+        self.birdDirection = 0 # >= 0 indicates direction towards right
 
         self.playerSteps = 0
         self.playerStepsPerSecond = 4
 
     def playerOnStep(self, app):
+        # get the birds' heading direction
+        self.getBirdDirection()
+        self.changeDirection()
         #move locations towards the cursors
         self.moveToCursor() 
         #gather/pollinate flowers
@@ -86,23 +104,69 @@ class Player(Bird):
         #update the inventory per step
         self.updateInventory(app)
 
+        self.updateFlappingSpeed()
+
         self.stepCounter += 1
+
+        
+    def updateFlappingSpeed(self):
+        
         #The next 2 lines are adaptation of 112's course note
         # URL: http://www.cs.cmu.edu/~112-f22/notes
         # /notes-animations-part4.html#spritesheetsWithCropping
-        if self.stepCounter >= 5: #update the sprite every 5 steps
-            self.birdCounter = (1 + self.birdCounter) % len(self.birds)
-            self.stepCounter = min(0, self.stepCounter)
+
+        # dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
+        # for 
+        if (self.stepCounter >= 10) and (len(self.birdsImages) > 0): 
+            self.birdCounter = (1 + self.birdCounter) % len(self.birdsImages)
+            self.stepCounter = 0
+    
+    def getBirdDirection(self):
+        if self.cursorX - self.x < 0:
+            self.birdDirection = -1
+        else:
+            self.birdDirection = 1
+
+    # def loadBirdImage(self):
+    #     # The bird picture is from 
+    #     # URL: https://www.pngitem.com/middle/
+    #     # ihbJiib_transparent-bird-bird-sprite-sheet-png-png-download/
+    #     orginalPicture = 'birdPic.png'
+    #     birdImage = Image.open(orginalPicture)
+    #     birdImageNum = 3 
+    #     #crop the bird picture and store the sprite bird pic into the birds list
+    #     for index in range(birdImageNum):
+    #         bird = birdImage.crop((320*index, 0, 320*(index+1), 1232))
+    #         imageWidth, imageHeight = bird.width, bird.height
+    #         #bird is facing the right
+    #         self.birdsRight.append(CMUImage(bird))
+
+    #         #bird is facing the left 
+    #         bird = bird.transpose(Image.FLIP_LEFT_RIGHT)
+    #         self.birdWidth, self.birdHeight = (imageWidth//3, imageHeight//3)
+    #         self.birdsLeft.append(CMUImage(bird))
+
+    def changeDirection(self):
+        if self.birdDirection < 0:
+            self.birdsImages = self.birdsImagesLeft
+        else:
+            self.birdsImages = self.birdsImagesRight
 
     def moveToCursor(self):
         #get the movement distances between the cursor and current locations
         distanceX = self.cursorX - self.x
         distanceY = self.cursorY - self.y
 
+        if distanceX < 0:
+            self.birdDirection = -1
+        else:
+            self.birdDirection = 1
+
         #update the birds' locations with 1/5 of the current distances
         updatingRatio =  1/5
-        self.x += distanceX * updatingRatio
-        self.y += distanceY * updatingRatio
+        if (distanceX != 0 ) and (distanceY != 0):
+            self.x += distanceX * updatingRatio
+            self.y += distanceY * updatingRatio
 
         #make up the misplacement between the bird's feet and cursor locations
         self.birdFeetX = self.x - 2
@@ -111,6 +175,7 @@ class Player(Bird):
         #update the  coordinates of the dot on birds' feet
         self.dotX = self.x
         self.dotY = self.y
+
 
     def gatherAndPollinateFlower(self, app):
         for flower in app.flowers:
@@ -167,10 +232,11 @@ class Player(Bird):
         self.drawDot(app)
     
     def drawBird(self, app):
-        bird = self.birds[self.birdCounter]
-        # due to the image issues, the bird is drawn the its feet
-        drawImage(bird, self.birdFeetX, self.birdFeetY, align='center', 
-                  width=self.birdWidth, height=self.birdHeight)
+        if len(self.birdsImages) > 0:
+            bird = self.birdsImages[self.birdCounter]
+            # due to the image issues, the bird is drawn the its feet
+            drawImage(bird, self.birdFeetX, self.birdFeetY, align='center', 
+                    width=self.birdWidth, height=self.birdHeight)
 
     def drawDot(self, app):
         # if the inventory not empty draw the carrying dot to the bird's feet
@@ -208,6 +274,9 @@ class Helper(Player):
         self.target = None
 
     def helperOnStep(self, app):
+        # get the birds' heading direction
+        self.getBirdDirection()
+        self.changeDirection()
         #helper birds move towards the taget
         self.getTargetAndMakeMove(app) 
         #gather/pollinate flowers
@@ -216,14 +285,23 @@ class Helper(Player):
         self.updateInventory(app)
 
         self.stepCounter += 1
-        if self.stepCounter >= 5: #update the sprite every 5 steps
+
+        #update the sprite every 5 steps
+        if (self.stepCounter >= 5) and (len(self.birdsImages) > 0): 
             #This line is from 112's course note
-            self.birdCounter = (1 + self.birdCounter) % len(self.birds)
+            self.birdCounter = (1 + self.birdCounter) % len(self.birdsImages)
             self.stepCounter = min(0, self.stepCounter)
 
+    def getBirdDirection(self):
+        if self.target != None: 
+            if self.target.x - self.x < 0:
+                self.birdDirection = -1
+            else:
+                self.birdDirection = 1
+    
     def getTargetAndMakeMove(self, app):
         if self.target != None:
-            #check legality of the target
+            #check the legality of the target
             if self.isLegalTarget():
                 self.makeTargetMove(app)                
             else:
@@ -242,17 +320,15 @@ class Helper(Player):
         #update the birds' locations with 1/8 of the current distances
         updatingRatio =  1/8
         self.newX = distanceX * updatingRatio + self.x
-        self.newY = distanceY * updatingRatio + self.y
+
 
         #make sure the bird on the right side of canvas stays on the right 
-        if self.x > canvasMidLine:
-            if self.newX > canvasMidLine:
-                self.x = self.newX
+        if (self.x > canvasMidLine) and (self.newX > canvasMidLine):
+            self.x = self.newX
         #make sure the bird on the left side  stays on the left
-        else:
-            if self.newX <= canvasMidLine:
-                self.x = self.newX
-        self.y = self.newY
+        elif (self.x <= canvasMidLine) and (self.newX <= canvasMidLine):
+            self.x = self.newX
+        self.y = distanceY * updatingRatio + self.y
 
         #make up the different between the bird's feet and cursor locations
         self.birdFeetX = self.x - 2
@@ -328,7 +404,7 @@ class Flower(object):
         self.pollinatedTimes = 1
 
         #initiate flower colors
-        self.color = random.choice(['cyan', 'pink', 'yellow', 'red'])
+        self.color = random.choice(['cyan', 'pink', 'yellow'])
         
         #indicator for flowers are pollinated
         self.isPollinated = False
@@ -368,7 +444,7 @@ class Flower(object):
         self.y -= self.dy #update y
         if (self.x > self.radius) and (self.x < app.height):
             self.x -= self.dx #update x
-            self.dx += self.ddx
+            self.dx += self.ddx #updat dx
     
     def redrawFlower(self, app):
         self.drawFlower(app)
@@ -400,6 +476,7 @@ class Flower(object):
             drawCircle(self.x, self.y, self.radius, fill=app.background,
                            border=self.color, borderWidth=4)
             if self.isPollinated: 
+                #after it is pollinated, it becomes a solid circle
                 drawCircle(self.x, self.y, self.radius, fill=self.color)
 
     # @staticmethod
@@ -536,7 +613,7 @@ def redrawAllInstructionText(app):
     #draw the below instructions once every 900 calls
     counter = app.stepCounter % 900
 
-    #while the game is paused, show instruction to unpause the game
+    #while the game is paused, show instruction for unpausing the game
     if app.paused == True:
         drawToContinueText(app)
 
@@ -563,7 +640,7 @@ def redrawAllInstructionText(app):
 
 def drawToContinueText(app):
     drawLabel('Press p to unpause and continue the game', 
-              app.width//2, app.height//2, size=30, bold=True)
+                             app.width//2, app.height//2, size=30, bold=True)
 
 def drawInstructionText(app, text):
     if app.textSize > 0:

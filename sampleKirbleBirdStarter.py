@@ -12,7 +12,7 @@ import random, time
 class Kirb:
     def __init__(self):
         #Load the kirb gif
-        myGif = Image.open('images/kirb.gif')
+        myGif = Image.open('kirb.gif')
         self.spriteList = []
         for frame in range(myGif.n_frames):  #For every frame index...
             #Seek to the frame, convert it, add it to our sprite list

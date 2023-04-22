@@ -59,12 +59,13 @@ class Bird(object):
             #bird images facing the left 
             bird = bird.transpose(Image.FLIP_LEFT_RIGHT)
 
+            #decrease the image size
             self.birdWidth, self.birdHeight = (imageWidth//3, imageHeight//3)
             self.birdsImagesLeft.append(CMUImage(bird))
     
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
-# # # The BIRD (Player bird)--------------------------------------------------
+# # # The Player bird --------------------------------------------------------
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
 
@@ -107,13 +108,13 @@ class Player(Bird):
 
         
     def updateFlappingSpeed(self):
-        # dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
-        # for  
+        dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
+        newStepCounter = dist // 10  
 
         #The next 3 lines are adaptation of 112's course note
         # URL: http://www.cs.cmu.edu/~112-f22/notes
         # /notes-animations-part4.html#spritesheetsWithCropping
-        if (self.stepCounter >= 10) and (len(self.birdsImages) > 0): 
+        if (self.stepCounter >= (10 - newStepCounter)): 
             self.birdCounter = (1 + self.birdCounter) % len(self.birdsImages)
             self.stepCounter = 0
     
@@ -137,7 +138,7 @@ class Player(Bird):
         distanceY = self.cursorY - self.y
 
         #update the birds' locations with 1/5 of the current distances
-        updatingRatio =  1/5
+        updatingRatio =  1/10
         if (distanceX != 0 ) and (distanceY != 0):
             self.x += distanceX * updatingRatio
             self.y += distanceY * updatingRatio
@@ -237,7 +238,7 @@ class Player(Bird):
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
-# # The BIRD (Helper BIRDS)-------------------------------------------------
+# # The Helper birds -------------------------------------------------------
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 
@@ -246,6 +247,7 @@ class Helper(Player):
     def __init__(self, x, y):
         super().__init__(x, y)
         self.target = None
+        self.normalFlapping = True
 
     def helperOnStep(self, app):
         # get the birds' heading direction
@@ -258,14 +260,30 @@ class Helper(Player):
         self.gatherAndPollinateFlower(app)
         #update the inventory per step
         self.updateInventory(app)
-
+        #update birds' wings flapping speed
+        self.updateFlappingSpeed()
+        
         self.stepCounter += 1
 
-        #update the sprite every 5 steps
-        if (self.stepCounter >= 5) and (len(self.birdsImages) > 0): 
-            #This line is from 112's course note
-            self.birdCounter = (1 + self.birdCounter) % len(self.birdsImages)
-            self.stepCounter = min(0, self.stepCounter)
+    def updateFlappingSpeed(self):
+        #when target is none, birds wings flap normally
+        if self.normalFlapping:
+            if self.stepCounter >= 5:
+                #The next 2 lines are adaptation of 112's course note
+                # URL: http://www.cs.cmu.edu/~112-f22/notes
+                # /notes-animations-part4.html#spritesheetsWithCropping
+                self.birdCounter = (1+self.birdCounter) % len(self.birdsImages)
+                self.stepCounter = 0
+        else:
+            #when target is none, birds wings flap  increase accordingly
+            dist = Player.distance(self.x, self.y, self.target.x, self.target.y)
+            newStepCounter = dist // 10 
+            if (self.stepCounter >= (10 - newStepCounter)): 
+                #The next 2 lines are adaptation of 112's course note
+                # URL: http://www.cs.cmu.edu/~112-f22/notes
+                # /notes-animations-part4.html#spritesheetsWithCropping
+                self.birdCounter = (1+self.birdCounter) % len(self.birdsImages)
+                self.stepCounter = 0
 
     def getBirdDirection(self):
         if self.target != None: 
@@ -277,10 +295,14 @@ class Helper(Player):
     def getTargetAndMakeMove(self, app):
         if self.target != None:
             #check the legality of the target
-            if self.isLegalTarget():
+            if self.isValidTarget():
+                # if target is legal, bird flapping speed will increase
+                self.normalFlapping = False
                 self.makeTargetMove(app)                
             else:
                 self.target = None
+                # if target is None, bird flapping speed is normal
+                self.normalFlapping = True
         if self.target == None:
             self.getTarget(app)
 
@@ -292,8 +314,8 @@ class Helper(Player):
         distanceX = targetX - self.x
         distanceY = targetY - self.y
 
-        #update the birds' locations with 1/8 of the current distances
-        updatingRatio =  1/8
+        #update the birds' locations with 1/12 of the current distances
+        updatingRatio =  1/10
         self.newX = distanceX * updatingRatio + self.x
 
 
@@ -316,7 +338,7 @@ class Helper(Player):
         self.dotY = self.y - 30
 
     
-    def isLegalTarget(self):
+    def isValidTarget(self):
         result = ((self.target.growing == False) and # ungathred/unpollinated
                   (self.target.y > 0)) # on canvas
         return result
@@ -390,10 +412,13 @@ class Flower(object):
         self.growing = False
 
         #initia dx/dy/ddx volecities and accelation. 
-        # I think 6 for dx is the best for my game for x movement
+        # I think 6 for dx and 5 for dy the best for my game 
         self.dx = math.sin(6 * self.y) 
         self.dy = 5
         self.ddx = 0.01
+
+    def __repr__(self):
+        return f"Flower: ({self.x}, {self.y})"
     
     def flowerOnStep(self, app):
         # update position through the offset
@@ -574,6 +599,8 @@ def updateInstuctionTextSize(app):
 
 def redrawAll(app):
     redrawAllInstructionText(app)
+
+    #draw player
     app.player.redrawBirdAll(app)
 
     #draw helpers when they are called

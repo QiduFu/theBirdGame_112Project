@@ -60,7 +60,7 @@ class Bird(object):
             bird = bird.transpose(Image.FLIP_LEFT_RIGHT)
 
             #decrease the image size
-            self.birdWidth, self.birdHeight = (imageWidth//3, imageHeight//3)
+            self.birdWidth, self.birdHeight = (imageWidth//4, imageHeight//3)
             self.birdsImagesLeft.append(CMUImage(bird))
     
 # # --------------------------------------------------------------------------
@@ -102,12 +102,12 @@ class Player(Bird):
         #update the inventory per step
         self.updateInventory(app)
         #update birds' wings flapping speed
-        self.updateFlappingSpeed()
+        self.updateWingFlapping()
 
         self.stepCounter += 1
 
         
-    def updateFlappingSpeed(self):
+    def updateWingFlapping(self):
         dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
         newStepCounter = dist // 10  
 
@@ -137,8 +137,8 @@ class Player(Bird):
         distanceX = self.cursorX - self.x
         distanceY = self.cursorY - self.y
 
-        #update the birds' locations with 1/5 of the current distances
-        updatingRatio =  1/10
+        #update the birds' locations with 1/8 of the current distances
+        updatingRatio =  1/8
         if (distanceX != 0 ) and (distanceY != 0):
             self.x += distanceX * updatingRatio
             self.y += distanceY * updatingRatio
@@ -156,7 +156,8 @@ class Player(Bird):
         for flower in app.flowers:
             #checked if the dots interact with the flower
             isInteracted = Player.distance(self.dotX, self.dotY, 
-                                        flower.x, flower.y) <= flower.radius
+                           flower.x, flower.y) <= (flower.radius + 15)
+                                                    #dot's radius is 15
 
             if isInteracted == True:
                 self.gatherFlowers(app, flower)
@@ -211,7 +212,7 @@ class Player(Bird):
             bird = self.birdsImages[self.birdCounter]
             # due to the image issues, the bird is drawn the its feet
             drawImage(bird, self.birdFeetX, self.birdFeetY, align='center', 
-                    width=self.birdWidth, height=self.birdHeight)
+                      width=self.birdWidth, height=self.birdHeight)
 
     def drawDot(self, app):
         # if the inventory not empty draw the carrying dot to the bird's feet
@@ -221,8 +222,8 @@ class Player(Bird):
             for color in self.inventory:
                 #only draw  the dot with color which has not been drawn
                 if color not in colorsDrawn:
-                    drawCircle(self.dotX + increment, self.dotY, 10, fill=color)
-                    increment += 5
+                    drawCircle(self.dotX + increment, self.dotY, 15, fill=color)
+                    increment += 10
                     colorsDrawn.add(color)
 
     def drawInventory(self, app):
@@ -261,11 +262,11 @@ class Helper(Player):
         #update the inventory per step
         self.updateInventory(app)
         #update birds' wings flapping speed
-        self.updateFlappingSpeed()
+        self.updateWingFlapping()
         
         self.stepCounter += 1
 
-    def updateFlappingSpeed(self):
+    def updateWingFlapping(self):
         #when target is none, birds wings flap normally
         if self.normalFlapping:
             if self.stepCounter >= 5:
@@ -296,7 +297,7 @@ class Helper(Player):
         if self.target != None:
             #check the legality of the target
             if self.isValidTarget():
-                # if target is legal, bird flapping speed will increase
+                # if target is valid, bird flapping speed will increase
                 self.normalFlapping = False
                 self.makeTargetMove(app)                
             else:
@@ -334,8 +335,8 @@ class Helper(Player):
 
         #update the  coordinates of the dots on birds' feet and 
         #make up the differences between the cursors and the dots
-        self.dotX = self.x + 2
-        self.dotY = self.y - 30
+        self.dotX = self.x - 9
+        self.dotY = self.y - 38
 
     
     def isValidTarget(self):
@@ -344,14 +345,18 @@ class Helper(Player):
         return result
 
     def getTarget(self, app):
+        inventoryDict = dict()
+        for flower in app.flowers:
+            inventoryDict[flower.color] = inventoryDict.get(flower.color, 0) + 1
+
         shortestDist = None
         for flower in app.flowers:
             if flower.isPollinator:
                 self.getTargetFlower(flower, shortestDist, app)
             else:
                 # if it is pollinated, make the inventory has the correct color
-                # before make it into our target
-                if flower.color in self.inventory:
+                # before make it into our target, meaning the value > 0
+                if inventoryDict[flower.color] > 0:
                     self.getTargetFlower(flower, shortestDist, app)
 
     def getTargetFlower(self, flower, shortestDist, app):
@@ -481,27 +486,6 @@ class Flower(object):
                 #after it is pollinated, it becomes a solid circle
                 drawCircle(self.x, self.y, self.radius, fill=self.color)
 
-    # @staticmethod
-    # def removeOffCanvasFlowers(app):
-    #     index = 0
-    #     while index < len(app.flowers):
-    #         flower = app.flowers[index]
-    #         #remove the flower moving outside of the cavas
-    #         if flower.y < 0:
-    #             app.flowers.pop(index)
-    #         else:
-    #             index += 1
-                
-    # @staticmethod
-    # def generateFlowers(app):
-    #     #generate 4 flowers per second with a total of 25 flowers on the screen
-    #     totalFlowerNumber = 25
-    #     if ((app.stepCounter % app.flowerPerSecond == 0) and 
-    #         (len(app.flowers) <= totalFlowerNumber)):
-    #         #randomly generate pollinator or pollinated
-    #         isPollinator = random.choice([True, False])
-    #         app.flowers.append(Flower(isPollinator, app))
-
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # # APP---------------------------------------------------------------------
@@ -562,10 +546,8 @@ def takeStep(app):
 
 def removeAndGenerateFlowers(app):
     #remove flowers when they are outside the canvas
-    # Flower.removeOffCanvasFlowers(app)
     removeOffCanvasFlowers(app)
     #generate flowers periodically
-    # Flower.generateFlowers(app)
     generateFlowers(app)
 
 def removeOffCanvasFlowers(app):

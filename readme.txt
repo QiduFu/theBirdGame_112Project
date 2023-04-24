@@ -5,6 +5,7 @@ Readme File: Instruction
 
 Title and description:
     Title: This term project titled “A Game of Flying Birds”  
+           (in the 112TermProject.py)
            is based on the scaffolded project developed by Mike 
            (15112 instructor, Mike hereafter), 
            which originates from the bee game, 
@@ -29,16 +30,16 @@ Title and description:
 
 How to run the project:
     To run this project, you will need to put the birdPic.png, the 112TermProject.py, 
-    and cmu_graphics into one folder/directory. 
+    and cmu_graphics into the same folder/directory. 
     And then, open the 112TermProject.py file in your text editor, such as VScode, 
-    by pressing command + B in Mac.
+    To run the project, you should press command + B in Mac.
 
 
 Which libraries you're using that need to be installed:
     As stated, you will need to use cmu_graphics to run the project. 
     Thus make sure to download it and put it into the same folder with 
     the 112TermProject.py and birdPic.png. 
-    All other libraries are Python built-in libraries. 
+    All other libraries are Python built-in libraries, such as random/math. 
 
 
 A list of any shortcut commands that exist:
@@ -48,6 +49,6 @@ A list of any shortcut commands that exist:
     4) Press h to get helper birds
     5) Press r to restart the game
 
-    After your press the these keys, and within 900 steps (maybe 1.5-2 minutes), 
+    After your press the these keys, and within 900 steps (maybe 1.5 minutes), 
     you should see all the major features. 
 

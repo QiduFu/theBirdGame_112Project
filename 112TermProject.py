@@ -161,7 +161,7 @@ class Player(Bird):
 
             if isInteracted == True:
                 self.gatherFlowers(app, flower)
-                self.pollinateFlowers(flower)
+                self.pollinateFlowers(app, flower)
 
     def gatherFlowers(self, app, flower):
         # gather the flowers/pollination from pollinators
@@ -175,7 +175,7 @@ class Player(Bird):
             #flowers grows when it is gathered
             flower.growing = True
 
-    def pollinateFlowers(self, flower):
+    def pollinateFlowers(self, app, flower):
         inventory = self.inventory
         #pollinate when the inventory has the correct colors
         #it is not a pollinator and has not been polllinated
@@ -189,6 +189,9 @@ class Player(Bird):
 
             # when pollinated, update the inventory
             inventory.remove(flower.color)
+
+            # score + 1 when a flower is pollinated
+            app.score += 1
 
     def updateInventory(self, app):
         for flower in app.flowers:
@@ -508,6 +511,7 @@ def reset(app):
     app.paused = False
     app.helper1 = None
     app.helper2 = None
+    app.score = 0
 
 def onKeyPress(app, key):
     if key == 'r':
@@ -596,8 +600,8 @@ def redrawAll(app):
         flower.redrawFlower(app)
 
 def redrawAllInstructionText(app):
-    #draw the below instructions once every 900 calls
-    counter = app.stepCounter % 900
+    #draw the below instructions once every 1050 calls
+    counter = app.stepCounter % 1050
 
     #while the game is paused, show instruction for unpausing the game
     if app.paused == True:
@@ -622,6 +626,9 @@ def redrawAllInstructionText(app):
         drawInstructionText(app, text)
     elif 750 <= counter < 900:
         text = 'Press r to restart the game'
+        drawInstructionText(app, text)
+    elif 900<= counter < 1050:
+        text = f"Your current score is: {app.score}"
         drawInstructionText(app, text)
 
 def drawToContinueText(app):

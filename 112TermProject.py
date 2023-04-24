@@ -1,5 +1,5 @@
 #title: A Game of Flying Birds
-#date: 04/03/2023
+#time: Apr 2023
 #spring23 15112 term project
 #name: Qidu Fu
 #andrewId: qiduf
@@ -46,7 +46,7 @@ class Bird(object):
         birdImageNum = 3 
 
         #crop the bird picture and store the sprite bird pic into the birds list
-        # The next 3 lines are adaptation of 112's course note
+        # The next 3 lines are adaptations of 112's course note
         # URL: http://www.cs.cmu.edu/~112-f22/notes
         # /notes-animations-part4.html#spritesheetsWithCropping
         for index in range(birdImageNum):
@@ -111,7 +111,7 @@ class Player(Bird):
         dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
         newStepCounter = dist // 10  
 
-        #The next 3 lines are adaptation of 112's course note
+        #The next 3 lines are adaptations of 112's course note
         # URL: http://www.cs.cmu.edu/~112-f22/notes
         # /notes-animations-part4.html#spritesheetsWithCropping
         if (self.stepCounter >= (10 - newStepCounter)): 
@@ -178,6 +178,7 @@ class Player(Bird):
     def pollinateFlowers(self, flower):
         inventory = self.inventory
         #pollinate when the inventory has the correct colors
+        #it is not a pollinator and has not been polllinated
         if ((len(inventory) >= 0) and (flower.color in inventory) and 
             (not flower.isPollinator) and (flower.pollinatedTimes == 1)): 
             flower.isPollinated = True 
@@ -265,26 +266,6 @@ class Helper(Player):
         self.updateWingFlapping()
         
         self.stepCounter += 1
-
-    def updateWingFlapping(self):
-        #when target is none, birds wings flap normally
-        if self.normalFlapping:
-            if self.stepCounter >= 5:
-                #The next 2 lines are adaptation of 112's course note
-                # URL: http://www.cs.cmu.edu/~112-f22/notes
-                # /notes-animations-part4.html#spritesheetsWithCropping
-                self.birdCounter = (1+self.birdCounter) % len(self.birdsImages)
-                self.stepCounter = 0
-        else:
-            #when target is none, birds wings flap  increase accordingly
-            dist = Player.distance(self.x, self.y, self.target.x, self.target.y)
-            newStepCounter = dist // 10 
-            if (self.stepCounter >= (10 - newStepCounter)): 
-                #The next 2 lines are adaptation of 112's course note
-                # URL: http://www.cs.cmu.edu/~112-f22/notes
-                # /notes-animations-part4.html#spritesheetsWithCropping
-                self.birdCounter = (1+self.birdCounter) % len(self.birdsImages)
-                self.stepCounter = 0
 
     def getBirdDirection(self):
         if self.target != None: 
@@ -380,10 +361,30 @@ class Helper(Player):
                 shortestDist = currentDist
                 self.target = flower
 
+    def updateWingFlapping(self):
+        #when target is none, birds wings flap normally
+        if self.normalFlapping:
+            if self.stepCounter >= 5:
+                #The next 2 lines are adaptation of 112's course note
+                # URL: http://www.cs.cmu.edu/~112-f22/notes
+                # /notes-animations-part4.html#spritesheetsWithCropping
+                self.birdCounter = (1+self.birdCounter) % len(self.birdsImages)
+                self.stepCounter = 0
+        else:
+            #when target is not none, birds wings flap  increase accordingly
+            dist = Player.distance(self.x, self.y, self.target.x, self.target.y)
+            newStepCounter = dist // 10 
+            if self.stepCounter >= (10 - newStepCounter): 
+                #The next 2 lines are adaptation of 112's course note
+                # URL: http://www.cs.cmu.edu/~112-f22/notes
+                # /notes-animations-part4.html#spritesheetsWithCropping
+                self.birdCounter = (1+self.birdCounter) % len(self.birdsImages)
+                self.stepCounter = 0
+
     def redrawBirdAll(self, app):
-        self.drawBird(app) # draw the flying bird
-        self.drawInventory(app) # draw the inventory 
-        self.drawDot(app) # draw the dot on the bird feet
+        self.drawBird(app) 
+        self.drawInventory(app) 
+        self.drawDot(app) 
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------

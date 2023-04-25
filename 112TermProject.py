@@ -15,7 +15,6 @@ import random
 import math
 from PIL import Image
 
-
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # The BIRD (main)-----------------------------------------------------------
@@ -94,30 +93,18 @@ class Player(Bird):
         # get the birds' heading direction
         self.getBirdDirection()
         #change brids facing direciton
-        self.changeDirection()
+        self.changeDirection()        
+        #update birds' wings flapping speed
+        self.updateWingFlapping()
         #move locations towards the cursors
         self.moveToCursor() 
         #gather/pollinate flowers
         self.gatherAndPollinateFlower(app)
         #update the inventory per step
         self.updateInventory(app)
-        #update birds' wings flapping speed
-        self.updateWingFlapping()
 
         self.stepCounter += 1
 
-        
-    def updateWingFlapping(self):
-        dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
-        newStepCounter = dist // 10  
-
-        #The next 3 lines are adaptations of 112's course note
-        # URL: http://www.cs.cmu.edu/~112-f22/notes
-        # /notes-animations-part4.html#spritesheetsWithCropping
-        if (self.stepCounter >= (10 - newStepCounter)): 
-            self.birdCounter = (1 + self.birdCounter) % len(self.birdsImages)
-            self.stepCounter = 0
-    
     def getBirdDirection(self):
         if self.cursorX - self.x < 0:
             self.birdDirection = -1
@@ -131,6 +118,17 @@ class Player(Bird):
         # when it is no less than 0, bird is flying towards right
         else:
             self.birdsImages = self.birdsImagesRight
+
+    def updateWingFlapping(self):
+        dist = Player.distance(self.x, self.y, self.cursorX, self.cursorY)
+        newStepCounter = dist // 10  
+
+        #The next 3 lines are adaptations of 112's course note
+        # URL: http://www.cs.cmu.edu/~112-f22/notes
+        # /notes-animations-part4.html#spritesheetsWithCropping
+        if (self.stepCounter >= (10 - newStepCounter)): 
+            self.birdCounter = (1 + self.birdCounter) % len(self.birdsImages)
+            self.stepCounter = 0
 
     def moveToCursor(self):
         #get the movement distances between the cursor and current locations
@@ -150,7 +148,6 @@ class Player(Bird):
         #update the  coordinates of the dot on birds' feet
         self.dotX = self.x
         self.dotY = self.y
-
 
     def gatherAndPollinateFlower(self, app):
         for flower in app.flowers:
@@ -252,7 +249,7 @@ class Helper(Player):
     def __init__(self, x, y):
         super().__init__(x, y)
         self.target = None
-        self.normalFlapping = True
+        self.normalFlapping = True # birds' wing flapping speed
 
     def helperOnStep(self, app):
         # get the birds' heading direction
@@ -299,10 +296,9 @@ class Helper(Player):
         distanceX = targetX - self.x
         distanceY = targetY - self.y
 
-        #update the birds' locations with 1/12 of the current distances
+        #update the birds' locations with 1/10 of the current distances
         updatingRatio =  1/10
         self.newX = distanceX * updatingRatio + self.x
-
 
         #make sure the bird on the right side of canvas stays on the right 
         if (self.x > canvasMidLine) and (self.newX > canvasMidLine):
@@ -321,8 +317,7 @@ class Helper(Player):
         #make up the differences between the cursors and the dots
         self.dotX = self.x - 9
         self.dotY = self.y - 38
-
-    
+   
     def isValidTarget(self):
         result = ((self.target.growing == False) and # ungathred/unpollinated
                   (self.target.y > 0)) # on canvas
@@ -434,7 +429,7 @@ class Flower(object):
         self.updateFlowerLocation(app)
 
         #update radius per call when it is growing
-        if (self.growing == True):
+        if self.growing == True:
             self.updateFlowerRadius()
     
     def updateFlowerRadius(self):
@@ -474,7 +469,7 @@ class Flower(object):
         # gathered the first time: ringed circles
         elif self.gatheredTimes == 1:
             drawCircle(self.x, self.y, self.radius, fill=app.background,
-                    border=self.color, borderWidth=4)
+                            border=self.color, borderWidth=4)
             drawCircle(self.x, self.y, 10, fill=self.color)
         
         # second gathered pollination: hollow circles
@@ -485,7 +480,7 @@ class Flower(object):
     def drawPollinated(self, app):
             # hollow circles for being pollinated
             drawCircle(self.x, self.y, self.radius, fill=app.background,
-                           border=self.color, borderWidth=4)
+                            border=self.color, borderWidth=4)
             if self.isPollinated: 
                 #after it is pollinated, it becomes a solid circle
                 drawCircle(self.x, self.y, self.radius, fill=self.color)
@@ -511,7 +506,7 @@ def reset(app):
     app.paused = False
     app.helper1 = None
     app.helper2 = None
-    app.score = 0
+    app.score = 0 
 
 def onKeyPress(app, key):
     if key == 'r':
@@ -567,7 +562,7 @@ def removeOffCanvasFlowers(app):
             
 def generateFlowers(app):
     #generate 4 flowers per second with a total of 20 flowers on the screen
-    totalFlowerNumber = 20
+    totalFlowerNumber = 25
     if ((app.stepCounter % app.flowerPerSecond == 0) and 
         (len(app.flowers) < totalFlowerNumber)):
         #randomly generate pollinator or pollinated

@@ -49,6 +49,6 @@ A list of any shortcut commands that exist:
     4) Press h to get helper birds
     5) Press r to restart the game
 
-    After your press the these keys, and within 900 steps (maybe 1.5 minutes), 
+    After your press the these keys, and within 1050 steps (maybe 1.5 minutes), 
     you should see all the major features. 
 

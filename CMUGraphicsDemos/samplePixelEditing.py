@@ -1,6 +1,7 @@
-from cmu_graphics import *
+
 from PIL import Image
 import os, pathlib
+from os.path.join(pathlib.Path(__file__).parent,'cmu_graphics') import *
 
 # For more information on image modes in PIL,
 # See: https://pillow.readthedocs.io/en/stable/handbook/concepts.html

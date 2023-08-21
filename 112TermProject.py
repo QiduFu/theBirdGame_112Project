@@ -15,6 +15,26 @@ import random
 import math
 from PIL import Image
 
+
+# import os, pathlib
+
+# #See: https://pillow.readthedocs.io/en/stable/reference/Image.html 
+
+# def onAppStart(app):
+#     app.margin = 5
+
+#     # Open image from local directory
+#     app.image = Image.open("images/Caaaaat.jpg")
+    
+#     # If the above line displays the error
+#     # FileNotFoundError: [Errno 2] No such file or directory: 'images/Caaaaat.jpg'
+#     # it is because PIL is looking for the file
+#     # in the directory Python is installed in.
+#     # Instead, either use absolute file path 
+#     # or comment out the line above and use the line below.
+    
+#     app.image = Image.open(os.path.join(pathlib.Path(__file__).parent, "images/Caaaaat.jpg"))
+
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # The BIRD (main)-----------------------------------------------------------
@@ -57,10 +77,10 @@ class Bird(object):
 
             #bird images facing the left 
             bird = bird.transpose(Image.FLIP_LEFT_RIGHT)
+            self.birdsImagesLeft.append(CMUImage(bird))
 
             #decrease the image size
             self.birdWidth, self.birdHeight = (imageWidth//4, imageHeight//3)
-            self.birdsImagesLeft.append(CMUImage(bird))
     
 # # --------------------------------------------------------------------------
 # # --------------------------------------------------------------------------
@@ -153,7 +173,7 @@ class Player(Bird):
         for flower in app.flowers:
             #checked if the dots interact with the flower
             isInteracted = Player.distance(self.dotX, self.dotY, 
-                           flower.x, flower.y) <= (flower.radius + 15)
+                            flower.x, flower.y) <= (flower.radius + 15)
                                                     #dot's radius is 15
 
             if isInteracted == True:
@@ -198,7 +218,7 @@ class Player(Bird):
                 inventoryCapacity = 6
                 if len(inventory) >= inventoryCapacity:
                     # remove the oldest from inventory before adding
-                    inventory.pop(0) 
+                    inventory.pop(0)
                 inventory.append(flower.color)
                 flower.isGathered = False
 
@@ -213,7 +233,7 @@ class Player(Bird):
             bird = self.birdsImages[self.birdCounter]
             # due to the image issues, the bird is drawn the its feet
             drawImage(bird, self.birdFeetX, self.birdFeetY, align='center', 
-                      width=self.birdWidth, height=self.birdHeight)
+                        width=self.birdWidth, height=self.birdHeight)
 
     def drawDot(self, app):
         # if the inventory not empty draw the carrying dot to the bird's feet
@@ -250,6 +270,7 @@ class Helper(Player):
         super().__init__(x, y)
         self.target = None
         self.normalFlapping = True # birds' wing flapping speed
+        self.inventory = []
 
     def helperOnStep(self, app):
         # get the birds' heading direction
@@ -285,8 +306,13 @@ class Helper(Player):
                 self.target = None
                 # if target is None, bird flapping speed is normal
                 self.normalFlapping = True
-        if self.target == None:
+        else:
             self.getTarget(app)
+
+    def isValidTarget(self):
+        result = (  (self.target.growing == False) and # ungathred/unpollinated
+                    (self.target.y > 0)) # on canvas
+        return result
 
     def makeTargetMove(self, app):
         targetX, targetY = self.target.x, self.target.y
@@ -317,16 +343,8 @@ class Helper(Player):
         #make up the differences between the cursors and the dots
         self.dotX = self.x - 9
         self.dotY = self.y - 38
-   
-    def isValidTarget(self):
-        result = ((self.target.growing == False) and # ungathred/unpollinated
-                  (self.target.y > 0)) # on canvas
-        return result
 
     def getTarget(self, app):
-        inventoryDict = dict()
-        for flower in app.flowers:
-            inventoryDict[flower.color] = inventoryDict.get(flower.color, 0) + 1
 
         shortestDist = None
         for flower in app.flowers:
@@ -334,8 +352,8 @@ class Helper(Player):
                 self.getTargetFlower(flower, shortestDist, app)
             else:
                 # if it is pollinated, make the inventory has the correct color
-                # before make it into our target, meaning the value > 0
-                if inventoryDict[flower.color] > 0:
+                # before make it into our target
+                if flower.color in self.inventory:
                     self.getTargetFlower(flower, shortestDist, app)
 
     def getTargetFlower(self, flower, shortestDist, app):
@@ -354,7 +372,7 @@ class Helper(Player):
         #not fully gathered or unpollinated flowers
         if (flower.gatheredTimes != 0) or (flower.pollinatedTimes != 0):
             currentDist = Player.distance(self.dotX, self.dotY, 
-                                          flower.x, flower.y)
+                                            flower.x, flower.y)
             if (shortestDist == None) or (shortestDist > currentDist):
                 shortestDist = currentDist
                 self.target = flower
@@ -484,6 +502,103 @@ class Flower(object):
             if self.isPollinated: 
                 #after it is pollinated, it becomes a solid circle
                 drawCircle(self.x, self.y, self.radius, fill=self.color)
+    
+    @staticmethod
+    def removeAndGenerateFlowers(app):
+        #remove flowers when they are outside the canvas
+        Flower.removeOffCanvasFlowers(app)
+        #generate flowers periodically
+        Flower.generateFlowers(app)
+
+    @staticmethod
+    def removeOffCanvasFlowers(app):
+        index = 0
+        while index < len(app.flowers):
+            flower = app.flowers[index]
+            #remove the flower moving outside of the cavas
+            if flower.y < 0:
+                app.flowers.pop(index)
+            else:
+                index += 1
+
+    @staticmethod           
+    def generateFlowers(app):
+        #generate 4 flowers per second with a total of 20 flowers on the screen
+        totalFlowerNumber = 20
+        if ((app.stepCounter % app.flowerPerSecond == 0) and 
+            (len(app.flowers) < totalFlowerNumber)):
+            #randomly generate pollinator or pollinated
+            isPollinator = random.choice([True, False])
+            app.flowers.append(Flower(isPollinator, app))
+
+
+# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# # TEXT---------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+class Text(object):
+
+    def __init__(self):
+        self.textSize = 30 #initiate the size instruciton text 
+        self.textStepCounter = 0
+
+    def textOnStep(self):
+        #update the text size per call
+        self.updateInstuctionTextSize()
+        self.textStepCounter += 1
+
+    def updateInstuctionTextSize(self):
+        #reset the instruction text size when it is <= 0
+        initialTextSize = 30 
+        if self.textSize <= 0:
+            self.textSize = initialTextSize
+        else:
+            #text size decreases 0.2 per call
+            shrinkingSpeedPerCall = 0.2
+            self.textSize -= shrinkingSpeedPerCall
+    
+    def redrawAllInstructionText(self, app):
+        #draw the below instructions once every 1050 calls
+        counter = self.textStepCounter % 1050
+
+        #while the game is paused, show instruction for unpausing the game
+        if app.paused == True:
+            Text.drawToContinueText(app)
+
+        #while the game playing, to enhance user experience, 
+        #show  text when the remainder/counter satifies the below periodically
+        elif 0 <= counter < 150:  # textSize / shrinkingSpeed = 30/0.2 = 150
+            text = 'Having fun :)'
+            self.drawInstructionText(app, text)
+        elif 150 <= counter < 300:
+            text = "Move your cursor/bird's feet to gather/pollinate flowers"
+            self.drawInstructionText(app, text)
+        elif 300 <= counter < 450:
+            text = 'Enjoy the game :)'
+            self.drawInstructionText(app, text)
+        elif 450 <= counter < 600:
+            text = 'Press p to pause the game'
+            self.drawInstructionText(app, text)
+        elif 600 <= counter < 750:
+            text = 'Press h to get helper birds'
+            self.drawInstructionText(app, text)
+        elif 750 <= counter < 900:
+            text = 'Press r to restart the game'
+            self.drawInstructionText(app, text)
+        elif 900<= counter < 1050:
+            text = f"Your current score is: {app.score}"
+            self.drawInstructionText(app, text)
+
+    def drawInstructionText(self, app, text):
+        if self.textSize > 0:
+            drawLabel(f'{text}', app.width//2, app.height//2, 
+                                size=self.textSize, bold=True)
+    
+    @staticmethod
+    def drawToContinueText(app):
+        drawLabel('Press p to unpause and continue the game', 
+                                app.width//2, app.height//2, size=30, bold=True)
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
@@ -497,12 +612,11 @@ def onAppStart(app):
 def reset(app):
     app.background = 'lightGreen'
     app.player = Player(400, 400)
+    app.text = Text()
     app.flowers = []
     app.flowerPerSecond = 5
     
-    app.stepCounter = 0
-    app.textSize = 30 #initiate the size instruciton text   
-    app.textShrikingSpeed = 0.2
+    app.stepCounter = 0 
     app.paused = False
     app.helper1 = None
     app.helper2 = None
@@ -527,6 +641,7 @@ def onStep(app):
 
 def takeStep(app):
     app.player.playerOnStep(app)
+    app.text.textOnStep()
 
     #update helper birds' calls if the birds exist
     if app.helper1 != None:
@@ -537,50 +652,13 @@ def takeStep(app):
         flower.flowerOnStep(app)
         
     #remove and generate flowers off/on vcanvas
-    removeAndGenerateFlowers(app)
-
-    #update the text size per call
-    updateInstuctionTextSize(app)
+    Flower.removeAndGenerateFlowers(app)
     
     app.stepCounter += 1
 
-def removeAndGenerateFlowers(app):
-    #remove flowers when they are outside the canvas
-    removeOffCanvasFlowers(app)
-    #generate flowers periodically
-    generateFlowers(app)
-
-def removeOffCanvasFlowers(app):
-    index = 0
-    while index < len(app.flowers):
-        flower = app.flowers[index]
-        #remove the flower moving outside of the cavas
-        if flower.y < 0:
-            app.flowers.pop(index)
-        else:
-            index += 1
-            
-def generateFlowers(app):
-    #generate 4 flowers per second with a total of 20 flowers on the screen
-    totalFlowerNumber = 25
-    if ((app.stepCounter % app.flowerPerSecond == 0) and 
-        (len(app.flowers) < totalFlowerNumber)):
-        #randomly generate pollinator or pollinated
-        isPollinator = random.choice([True, False])
-        app.flowers.append(Flower(isPollinator, app))
-
-def updateInstuctionTextSize(app):
-    #reset the instruction text size when it is <= 0
-    initialTextSize = 30 
-    if app.textSize <= 0:
-        app.textSize = initialTextSize
-    else:
-        #text size decreases 0.2 per call
-        shrinkingSpeedPerCall = 0.2
-        app.textSize -= shrinkingSpeedPerCall
-
 def redrawAll(app):
-    redrawAllInstructionText(app)
+    #draw instruction text
+    app.text.redrawAllInstructionText(app)
 
     #draw player
     app.player.redrawBirdAll(app)
@@ -593,47 +671,6 @@ def redrawAll(app):
     #draw flowers
     for flower in app.flowers:
         flower.redrawFlower(app)
-
-def redrawAllInstructionText(app):
-    #draw the below instructions once every 1050 calls
-    counter = app.stepCounter % 1050
-
-    #while the game is paused, show instruction for unpausing the game
-    if app.paused == True:
-        drawToContinueText(app)
-
-    #while the game playing, to enhance user experience, 
-    #show  text when the remainder/counter satifies the below periodically
-    elif 0 <= counter < 150:  # textSize / shrinkingSpeed = 30/0.2 = 150
-        text = 'Having fun :)'
-        drawInstructionText(app, text)
-    elif 150 <= counter < 300:
-        text = "Move your cursor/bird's feet to gather/pollinate flowers"
-        drawInstructionText(app, text)
-    elif 300 <= counter < 450:
-        text = 'Enjoy the game :)'
-        drawInstructionText(app, text)
-    elif 450 <= counter < 600:
-        text = 'Press p to pause the game'
-        drawInstructionText(app, text)
-    elif 600 <= counter < 750:
-        text = 'Press h to get helper birds'
-        drawInstructionText(app, text)
-    elif 750 <= counter < 900:
-        text = 'Press r to restart the game'
-        drawInstructionText(app, text)
-    elif 900<= counter < 1050:
-        text = f"Your current score is: {app.score}"
-        drawInstructionText(app, text)
-
-def drawToContinueText(app):
-    drawLabel('Press p to unpause and continue the game', 
-                             app.width//2, app.height//2, size=30, bold=True)
-
-def drawInstructionText(app, text):
-    if app.textSize > 0:
-        drawLabel(f'{text}', app.width//2, app.height//2, 
-                             size=app.textSize, bold=True)
 
 def main():
     runApp(width=800, height=600)

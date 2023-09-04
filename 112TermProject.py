@@ -35,6 +35,11 @@ from PIL import Image
     
 #     app.image = Image.open(os.path.join(pathlib.Path(__file__).parent, "images/Caaaaat.jpg"))
 
+# import os
+
+# fileName = 'image.png'
+# filePath = os.path.abspath(fileName)
+
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
 # The BIRD (main)-----------------------------------------------------------

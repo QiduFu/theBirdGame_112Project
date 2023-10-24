@@ -1,62 +1,54 @@
-#**A Game of Flying Birds**
+# **A Game of Flying Birds**
 
-Name: Qidu Fu
-andrewId: qiduf
+By Qidu(Quentin) Fu
 
-Readme File: Instruction
+## Outline
+- [1 Ideation and description](#1)
+  - [1.1 Ideation](#1.1)
+  - [1.2 Brief description](#1.2)
+- [2 How to run the project](#2)
+- [3 A list of shortcut commands](#3)
+ 
+<a name="1"></a>
+## **1 Ideation and description:**
 
-##**Title and description:**
+<a name='1.1'></a>
+### **1.1 Ideation:**
+This project titled “A Game of Flying Birds” (in [112TermProject.py](https://github.com/Qidu-Quentin-Fu/TheBeeGame--112Project/blob/5252a564df17bf8a84933c975c35fdea33152f10/112TermProject.py)) is based on the scaffolded project developed by Michael Taylor 
+(Spring 2023 15112 instructor, Mike hereafter), which originates from the bee game, 
+[the Google Doodle for Earth Day 2020.](https://www.google.com/doodles/earth-day-2020)
 
-###**Title:**
-This term project titled “A Game of Flying Birds”  
-(in the 112TermProject.py)
-is based on the scaffolded project developed by Mike 
-(15112 instructor, Mike hereafter), 
-which originates from the bee game, 
-the Google Doodle for Earth Day 2020.
-url: https://www.google.com/doodles/earth-day-2020
-
-###**Brief Description: **
-This term project uses the main ideas 
-from the scaffolded project developed by Mike. 
-Thus, it contains three main components: 
-1) the main flying bird (player flying bird, as Mike calls it player bee) 
-moves along the cursor and collects the pollen and pollinate flowes
-(I know that it may not make sense to relate birds with pollination, 
-but I do not like bees.), 
-2) two flying birds (helper flying bird, as Mike calls it) 
+<a name="1.2"></a>
+### **1.2 Brief description:**
+This term project uses the main ideas from the scaffolded project developed by Mike. Thus, it contains three main components: 
+- The main flying bird (player flying bird, as Mike calls it player bee) 
+moves along the cursor and collects the pollen and pollinate flowers. (It is more fun to see birds collecting/pollinating flowers.)
+- Two flying birds (helper flying bird, as Mike calls it) 
 automatically help the main flying bird to collect the pollen
 and pollinate flowers.
-3) flowers: generate flowers every five steps 
+- Flowers are generated every five steps 
 within a max of 20 flowers on screen.The off-screened flowers are removed.
-Each pollinator (flower) can be gathered twice, 
-but each pollinated flower can only be pollinated once
+Each pollinator (flower) can be gathered twice, but each pollinated flower can only be pollinated once.
 
-<img align='center' src='gameDemo.png' width=800, height=600>
+A [screenshot](images/gameDemo.png) of the game:
 
-For a demo of the game, please see the video: https://youtu.be/Xma-Pj436HI
+<img align='center' src='images/gameDemo.png' width=800, height=600>
 
-##**How to run the project:**
+For a demo of the game, please see the [YouTube video](https://youtu.be/Xma-Pj436HI)
 
-To run this project, you will need to put the birdPic.png, the 112TermProject.py, 
-and cmu_graphics into the same folder/directory. 
-And then, open the 112TermProject.py file in your text editor, such as VScode, 
-To run the project, you should press command + B in Mac.
+<a name='2'></a>
+## **2 How to run the project:**
 
+To run this project, you will need to put the [birdPic.png](images/birdPic.png), [112TermProject.py](112TermProject.py), 
+and [cmu_graphics](https://academy.cs.cmu.edu/desktop) into the same folder/directory. 
+Then, open the 112TermProject.py file in your text editor, such as VScode. 
 
-Which libraries you're using that need to be installed:
-As stated, you will need to use cmu_graphics to run the project. 
-Thus make sure to download it and put it into the same folder with 
-the 112TermProject.py and birdPic.png. 
-All other libraries are Python built-in libraries, such as random/math. 
+<a name='3'></a>
+## **3 A list of shortcut commands:**
+- Move your cursor on the player bird's feet to gather/pollinate flowers
+- Press p to pause the game
+- Press p to unpause the game
+- Press h to get helper birds
+- Press r to restart the game
 
-
-##**A list of any shortcut commands that exist:**
-1) Move your cursor have to the player bird's feet to gather/pollinate flowers
-2) Press p to pause the game
-3) Press p to unpause the game
-4) Press h to get helper birds
-5) Press r to restart the game
-
-After your press the these keys, and within 1050 steps (maybe 1.5 minutes), you should see all the major features. 
-
+After your press these keys, and within 1050 steps (maybe around 1.5 minutes), you should see all the major features. 

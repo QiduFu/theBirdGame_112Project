@@ -1,6 +1,6 @@
 # **A Game of Flying Birds**
 
-By Qidu(Quentin) Fu
+By Qidu() Fu
 
 ## Outline
 - [1 Ideation and description](#1)
